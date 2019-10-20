@@ -1,0 +1,14 @@
+
+.vs/GTARPG/v16/Server/sqlite3/db.lock
+.vs/GTARPG/v16/Server/sqlite3/storage.ide
+.vs/GTARPG/v16/.suo
+GTARPG/.vs/GTARPG/v16/.suo
+*.cache
+GTARPG/obj/Debug/GTARPGClient.csproj.CopyComplete
+GTARPG/obj/Debug/GTARPGClient.csproj.FileListAbsolute.txt
+GTARPG/obj/Debug/GTARPGClient.net.pdb
+GTARPG/obj/Debug/GTARPGClient.net.dll
+GTARPGServer/obj/Debug/GTARPGServer.csproj.CopyComplete
+GTARPGServer/obj/Debug/GTARPGServer.csproj.FileListAbsolute.txt
+GTARPGServer/obj/Debug/GTARPGServer.net.pdb
+GTARPGServer/obj/Debug/GTARPGServer.net.dll
