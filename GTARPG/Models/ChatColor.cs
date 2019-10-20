@@ -4,7 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace GTARPGServer.Models
+namespace GTARPGClient.Models
 {
     public static class ChatColor
     {

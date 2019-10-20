@@ -6,7 +6,7 @@ using System.Reflection;
 using System.Text;
 using System.Threading.Tasks;
 using CitizenFX.Core;
-using GTARPG.Models;
+using static CitizenFX.Core.Native.API;
 
 namespace GTARPGServer
 {
@@ -14,7 +14,12 @@ namespace GTARPGServer
     {
         public ServerMain()
         {
-
+            //EventHandlers["BanPlayer"] += new Action<Player, string>(Event_BanPlayer);
         }
+
+        //public void Event_BanPlayer(Player target, string reason)
+        //{
+        //    TempBanPlayer(target.Name, reason);
+        //}
     }
 }
