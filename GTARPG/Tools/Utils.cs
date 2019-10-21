@@ -1,8 +1,7 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿//Class Definition: Used for extra useful tools in the project
+
+using System;
+using System.Reflection;
 using CitizenFX.Core;
 
 namespace GTARPG.Tools
@@ -30,11 +29,18 @@ namespace GTARPG.Tools
 
         public void PrintToChat(string printArgs, int[] printColor)
         {
-            TriggerEvent("chat:addMessage", new
+            try
             {
-                color = printColor,
-                args = new[] { Prefix, $"{printArgs}" }
-            });
+                TriggerEvent("chat:addMessage", new
+                {
+                    color = printColor,
+                    args = new[] { Prefix, $"{printArgs}" }
+                });
+            }
+            catch(Exception ex)
+            {
+                Console.WriteLine($"Error at {MethodBase.GetCurrentMethod().Name}: {ex}");
+            }
         }
     }
 }

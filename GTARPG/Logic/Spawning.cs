@@ -1,20 +1,18 @@
-﻿using GTARPG.Tools;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using CitizenFX.Core;
-using GTARPGClient.Models;
 using System.Reflection;
+
+using GTARPG.Tools;
+using CitizenFX.Core;
+using static CitizenFX.Core.Native.API;
+using GTARPGClient.Models;
 
 namespace GTARPG.Logic
 {
     public class Spawning : BaseScript
     {
         private static Spawning _instance;
-        private List<CatProfile> catProfiles;
-
         public static Spawning Instance
         {
             get
@@ -27,46 +25,57 @@ namespace GTARPG.Logic
             }
         }
 
-        public List<CatProfile> CatProfiles
-        {
-            get
-            {
-                return catProfiles;
-            }
-        }
+        public List<CatProfile> CatProfiles { get; set; }
 
         private Spawning()
         {
-            catProfiles = new List<CatProfile>();
+            CatProfiles = new List<CatProfile>();
         }
 
         public void Command_GetCats(int source)
         {
-            var player = new Player(source);
-            var itemNo = 1;
-            foreach (var item in catProfiles.Where(x => x.Owner == player))
+            try
             {
-                Utils.Instance.PrintToChat($"{itemNo}.{item.Name} - {item.Age} years old. Has {item.Hunger} hunger left.", ChatColor.Blue);
-                itemNo++;
+                var counter = 1;
+                Utils.Instance.PrintToChat($"=====Your Pets=====", ChatColor.Red);
+                foreach (var item in CatProfiles.Where(x => x.Owner == new Player(source)))
+                {
+                    Utils.Instance.PrintToChat($"{counter}.{item.Name} - {item.Age} years old. Has {item.Hunger} hunger left.", ChatColor.Blue);
+                    counter++;
+                }
+            }
+            catch(Exception ex)
+            {
+                Console.WriteLine($"Error at {MethodBase.GetCurrentMethod().Name}: {ex}");
             }
         }
 
         public void Command_SpawnCar(int source)
         {
-            var car = new Model(VehicleHash.T20);
-            var player = new Player(source);
-            var result = World.CreateVehicle(car, player.Character.Position + 5);
-            if (result.IsCompleted)
+            try
             {
-                var ownedCar = result.Result;
-                ownedCar.IsInvincible = true;
+                if (!Admin.Instance.IsAdmin) return;
 
-                Utils.Instance.PrintToChat($"Your new T20 has spawned!", ChatColor.Green);
+                var player = new Player(source);
+                var result = World.CreateVehicle(new Model(VehicleHash.T20), player.Character.Position + 5);
+                if (result.IsCompleted)
+                {
+                    //Godmode the car
+                    result.Result.IsInvincible = true;
+                    result.Result.Mods.PrimaryColor = VehicleColor.MatteRed;
+                    result.Result.Mods.SecondaryColor = VehicleColor.MatteRed;
+                    result.Result.Mods.LicensePlate = $"ADMINCAR";
+                    Utils.Instance.PrintToChat("Your new admin [T20] has spawned!", ChatColor.Green);
+                }
+
+                if (result.IsFaulted || result.IsCanceled)
+                {
+                    Utils.Instance.PrintToChat("There was an issue spawning a car.", ChatColor.Red);
+                }
             }
-
-            if (result.IsFaulted || result.IsCanceled)
+            catch(Exception ex)
             {
-                Utils.Instance.PrintToChat("There was an issue spawning a car.", ChatColor.Red);
+                Console.WriteLine($"Error at {MethodBase.GetCurrentMethod().Name}: {ex}");
             }
         }
 
@@ -74,41 +83,39 @@ namespace GTARPG.Logic
         {
             try
             {
-                if (args.Count != 1)
+                var arguments = args.OfType<string>();
+                if(arguments.Count() == 1)
                 {
-                    Utils.Instance.PrintToChat($"Command usage: /cat <catname>", ChatColor.Red);
-                    return;
-                }
+                    var player = new Player(source);
+                    var result = World.CreatePed(new Model(PedHash.Cat), player.Character.Position + 4);
 
-                var mdl = new Model(PedHash.Cat);
-                var player = new Player(source);
-                var playerPos = player.Character.Position;
-                playerPos[0] = playerPos[0] += 4.0f;
-
-                var result = World.CreatePed(mdl, playerPos);
-                if (result.IsCompleted)
-                {
-                    var cat = result.Result;
-                    cat.CanBeTargetted = false;
-                    cat.IsInvincible = true;
-
-                    var newCat = new CatProfile()
+                    if (result.IsCompleted)
                     {
-                        Owner = player,
-                        Ped = cat,
-                        Name = args[0].ToString(),
-                        Age = 1,
-                        Hunger = 100,
-                        IsFollow = true
+                        var cat = result.Result;
+                        cat.CanBeTargetted = false;
+                        cat.IsInvincible = true;
 
-                    };
-                    catProfiles.Add(newCat);
-                    Utils.Instance.PrintToChat($"{newCat.Name} has spawned!", ChatColor.Green);
+                        var newCat = new CatProfile()
+                        {
+                            Owner = player,
+                            Ped = cat,
+                            Name = arguments.FirstOrDefault(),
+                            Age = 1,
+                            Hunger = 100,
+                            IsFollow = true
+                        };
+                        CatProfiles.Add(newCat);
+                        Utils.Instance.PrintToChat($"[{newCat.Name}] has spawned!", ChatColor.Green);
+                    }
+
+                    if (result.IsFaulted || result.IsCanceled)
+                    {
+                        Utils.Instance.PrintToChat("There was an issue spawning.", ChatColor.Red);
+                    }
                 }
-
-                if (result.IsFaulted || result.IsCanceled)
+                else
                 {
-                    Utils.Instance.PrintToChat("There was an issue spawning.", ChatColor.Red);
+                    Utils.Instance.PrintToChat("Command Usage: /spawncat 'CatNameHere'", ChatColor.Red);
                 }
             }
             catch (Exception ex)

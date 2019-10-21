@@ -25,7 +25,7 @@
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
     <DebugType>pdbonly</DebugType>
     <Optimize>true</Optimize>
-    <OutputPath>bin\Release\</OutputPath>
+    <OutputPath>..\..\..\FiveMServerData\cfx-server-data\resources\rpg\</OutputPath>
     <DefineConstants>TRACE</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
@@ -46,17 +46,12 @@
   <ItemGroup>
     <Compile Include="Logic\Admin.cs" />
     <Compile Include="Logic\Spawning.cs" />
-    <Compile Include="Models\CatProfile.cs" />
     <Compile Include="Models\ChatColor.cs" />
+    <Compile Include="Models\Peds\CatProfile.cs" />
+    <Compile Include="Models\Players\PlayerProfile.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="ClientMain.cs" />
     <Compile Include="Tools\Utils.cs" />
-  </ItemGroup>
-  <ItemGroup>
-    <ProjectReference Include="..\GTARPGServer\GTARPGServer.csproj">
-      <Project>{DF976277-500A-4680-8542-AC2CB7486EC7}</Project>
-      <Name>GTARPGServer</Name>
-    </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>
