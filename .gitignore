@@ -12,3 +12,5 @@ GTARPGServer/obj/Debug/GTARPGServer.csproj.CopyComplete
 GTARPGServer/obj/Debug/GTARPGServer.csproj.FileListAbsolute.txt
 GTARPGServer/obj/Debug/GTARPGServer.net.pdb
 GTARPGServer/obj/Debug/GTARPGServer.net.dll
+.vs/GTARPG/v16/Server/sqlite3/storage.ide-wal
+.vs/GTARPG/v16/Server/sqlite3/storage.ide-shm
