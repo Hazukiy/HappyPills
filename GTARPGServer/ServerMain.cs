@@ -21,7 +21,7 @@ namespace GTARPGServer
             EventHandlers["savePlayer"] += new Action<PlayerProfile>(SavePlayer);
             EventHandlers["addAdmin"] += new Action<int>(AddAdmin);
             EventHandlers["removeAdmin"] += new Action<int>(RemoveAdmin);
-            EventHandlers["server:invokeOwner"] += new Action<Player>(InvokeOwner);
+            EventHandlers["addOwner"] += new Action<Player>(InvokeOwner);
 
             PlayerProfiles = new List<PlayerProfile>();
         }

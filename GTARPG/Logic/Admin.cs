@@ -27,17 +27,14 @@ namespace GTARPG.Logic
 
         public bool IsAdmin { get; set; }
 
-        private Admin()
-        {
-
-        }
+        private Admin() { }
 
         public void Command_InvokeOwner(int source)
         {
             try
             {
                 var player = new Player(source);
-                TriggerServerEvent("server:invokeOwner", player);
+                TriggerServerEvent("addOwner", player);
                 Utils.Instance.PrintToChat($"Admin command invoked", ChatColor.Green);
             }
             catch(Exception ex)

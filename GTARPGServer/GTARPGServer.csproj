@@ -31,12 +31,8 @@
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
   <ItemGroup>
-    <Reference Include="CitizenFX.Core, Version=0.0.0.0, Culture=neutral, processorArchitecture=MSIL">
-      <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\..\..\FiveMServer\citizen\clr2\lib\mono\4.5\CitizenFX.Core.dll</HintPath>
-    </Reference>
-    <Reference Include="CitizenFX.Core.Server">
-      <HintPath>..\..\..\FiveMServer\citizen\clr2\lib\mono\4.5\CitizenFX.Core.Server.dll</HintPath>
+    <Reference Include="CitizenFX.Core.Server, Version=0.0.0.0, Culture=neutral, processorArchitecture=AMD64">
+      <HintPath>..\packages\CitizenFX.Core.Server.1.0.1641\lib\net45\CitizenFX.Core.Server.dll</HintPath>
     </Reference>
     <Reference Include="LiteDB, Version=4.1.4.0, Culture=neutral, PublicKeyToken=4ee40123013c9f27, processorArchitecture=MSIL">
       <HintPath>..\packages\LiteDB.4.1.4\lib\net40\LiteDB.dll</HintPath>
