@@ -64,8 +64,8 @@ namespace LiteRoleplayServer.components.Clients
                 using (var db = new LiteDatabase(SharedProperties.DatabaseName))
                 {
                     var col = db.GetCollection<ProfileModel>(SharedProperties.DatabaseTableProfile);
-                    col.Update(profile);
-                    Console.WriteLine($"Profile Saved({profile.ToString()})");
+                    col.Update(playerProfile);
+                    Console.WriteLine($"Profile Saved({playerProfile.ToString()})");
                 }
             }
         }
