@@ -1,6 +1,5 @@
-.vs/
-*.cache
-GTARPG/obj/
-GTARPG/bin/
-GTARPGServer/obj/
-GTARPGServer/bin/
+.vs/*
+LiteRoleplayClient/bin
+LiteRoleplayClient/obj
+LiteRoleplayServer/bin
+LiteRoleplayServer/obj
