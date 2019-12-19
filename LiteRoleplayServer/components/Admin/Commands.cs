@@ -1,12 +1,11 @@
 ﻿using System;
 using CitizenFX.Core;
 using LiteDB;
-using LiteRoleplayServer.components.Utils;
-using LiteRoleplayServer.Models.Admin;
-using LiteRoleplay.Shared.Models;
+using LiteRoleplayServer.Components.Utils;
+using LiteRoleplay.Shared;
 using static CitizenFX.Core.Native.API;
 
-namespace LiteRoleplayServer.components.Admin
+namespace LiteRoleplayServer.Components.Admin
 {
     public class Commands : BaseScript
     {
@@ -70,6 +69,24 @@ namespace LiteRoleplayServer.components.Admin
         #endregion
 
         #region Banning/Kicking
+        public void KickPlayer([FromSource]Player player, int netID, string reason)
+        {
+            var target = Players[netID];
+            if (target != null)
+            {
+                //Notify server
+                Console.WriteLine($"{target.Name} ");
+                ChatUtils.Instance.PrintToAll($"{target.Name} has been kicked by {player.Name} for reason: {reason}", SharedProperties.ColorGood);
+
+                //Kick player
+                DropPlayer(target.Handle, reason);
+            }
+            else
+            {
+                ChatUtils.Instance.PrintToClient(player, $"Failed to kick player with netID {netID}", SharedProperties.ColorError);
+            }
+        }
+
         /// <summary>
         /// Bans a player.
         /// </summary>
@@ -82,45 +99,42 @@ namespace LiteRoleplayServer.components.Admin
             var target = Players[netID];
             if(target != null)
             {
-                if (CheckPerms(player))
+                //Construct model
+                BanModel newBan = new BanModel()
                 {
-                    //Construct model
-                    BanModel newBan = new BanModel()
-                    {
-                        LicenseID = target.Identifiers["license"],
-                        BanReason = reason,
-                        BannedBy = player.Name,
-                        FirstBanDate = DateTime.UtcNow,
-                        BannedUntil = DateTime.UtcNow.AddHours(hours),
-                    };
+                    LicenseID = target.Identifiers["license"],
+                    BanReason = reason,
+                    BannedBy = player.Name,
+                    FirstBanDate = DateTime.UtcNow,
+                    BannedUntil = DateTime.UtcNow.AddHours(hours),
+                };
 
-                    //Insert new ban
-                    using (var db = new LiteDatabase(SharedProperties.DatabaseName))
-                    {
-                        var col = db.GetCollection<BanModel>(SharedProperties.DatabaseTableBanned);
-                        col.Insert(newBan);
-                    }
-
-                    //Update player info
-                    using (var db = new LiteDatabase(SharedProperties.DatabaseName))
-                    {
-                        var col = db.GetCollection<InfoModel>(SharedProperties.DatabaseTableInfo);
-                        var playerInfo = col.FindOne(x => x.LicenseID.Equals(target.Identifiers["license"]));
-                        playerInfo.IsBanned = true;
-                        col.Update(playerInfo);
-                    }
-
-                    //Notify server
-                    Console.WriteLine($"{player.Name} has been banned for {hours} hours for {reason} by {player.Name}");
-                    ChatUtils.Instance.PrintToAll($"{target.Name} has been banned for {hours} hours for {reason}", SharedProperties.ColorGood);
-
-                    //Kick player
-                    DropPlayer(target.Handle, reason);
-                }
-                else
+                //Insert new ban
+                using (var db = new LiteDatabase(SharedProperties.DatabaseName))
                 {
-                    Console.WriteLine($"Warning: Player {player.Name} tried to access an admin command.");
+                    var col = db.GetCollection<BanModel>(SharedProperties.DatabaseTableBanned);
+                    col.Insert(newBan);
                 }
+
+                //Update player info
+                using (var db = new LiteDatabase(SharedProperties.DatabaseName))
+                {
+                    var col = db.GetCollection<InfoModel>(SharedProperties.DatabaseTableInfo);
+                    var playerInfo = col.FindOne(x => x.LicenseID.Equals(target.Identifiers["license"]));
+                    playerInfo.IsBanned = true;
+                    col.Update(playerInfo);
+                }
+
+                //Notify server
+                Console.WriteLine($"{target.Name} has been banned for {hours} hours for {reason} by {player.Name}");
+                ChatUtils.Instance.PrintToAll($"{target.Name} has been banned for {hours} hours for reason: {reason}", SharedProperties.ColorGood);
+
+                //Kick player
+                DropPlayer(target.Handle, reason);
+            }
+            else
+            {
+                ChatUtils.Instance.PrintToClient(player, $"Failed to ban player with netID {netID}", SharedProperties.ColorError);
             }
         }
 
@@ -131,26 +145,19 @@ namespace LiteRoleplayServer.components.Admin
         /// <param name="dbID"></param>
         public void UnbanPlayer([FromSource]Player player, int dbID)
         {
-            if (CheckPerms(player))
+            //Find entry by db id
+            using (var db = new LiteDatabase(SharedProperties.DatabaseName))
             {
-                //Find entry by db id
-                using (var db = new LiteDatabase(SharedProperties.DatabaseName))
+                var col = db.GetCollection<BanModel>(SharedProperties.DatabaseTableBanned);
+                var result = col.Delete(x => x.Id == dbID);
+                if (result > 0)
                 {
-                    var col = db.GetCollection<BanModel>(SharedProperties.DatabaseTableBanned);
-                    var result = col.Delete(x => x.Id == dbID);
-                    if(result > 0)
-                    {
-                        ChatUtils.Instance.PrintToClient(player, $"You have unbanned ID {dbID}", SharedProperties.ColorGood);
-                    }
-                    else
-                    {
-                        ChatUtils.Instance.PrintToClient(player, $"Failed to unban ID {dbID}", SharedProperties.ColorError);
-                    }
+                    ChatUtils.Instance.PrintToClient(player, $"You have unbanned ID {dbID}", SharedProperties.ColorGood);
                 }
-            }
-            else
-            {
-                Console.WriteLine($"Warning: Player {player.Name} tried to access an admin command.");
+                else
+                {
+                    ChatUtils.Instance.PrintToClient(player, $"Failed to unban ID {dbID}", SharedProperties.ColorError);
+                }
             }
         }
 
@@ -172,6 +179,33 @@ namespace LiteRoleplayServer.components.Admin
                 {
                     Console.WriteLine($"Failed to unban player with id: {id}");
                 }
+            }
+        }
+        #endregion
+
+        #region Player Actions
+        public void FreezePlayer([FromSource] Player player, int netID, int freeze)
+        {
+            var target = Players[netID];
+            if(target != null)
+            {
+                var freezeTarget = freeze == 1 ? true : false;
+                target.Character.IsPositionFrozen = freezeTarget;
+
+                if (freezeTarget)
+                {
+                    ChatUtils.Instance.PrintToClient(player, $"Player {target.Name} has been frozen.", SharedProperties.ColorGood);
+                    ChatUtils.Instance.PrintToClient(target, $"You've been frozen by {player.Name}.", SharedProperties.ColorError);
+                }
+                else
+                {
+                    ChatUtils.Instance.PrintToClient(player, $"Player {target.Name} has been unfrozen.", SharedProperties.ColorGood);
+                    ChatUtils.Instance.PrintToClient(target, $"You've been unfrozen by {player.Name}.", SharedProperties.ColorGood);
+                }
+            }
+            else
+            {
+                ChatUtils.Instance.PrintToClient(player, $"Failed to find player with netID: {netID}", SharedProperties.ColorWarning);
             }
         }
         #endregion

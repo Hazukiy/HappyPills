@@ -1,6 +1,7 @@
 ﻿using CitizenFX.Core;
+using LiteRoleplay.Shared;
 
-namespace LiteRoleplayServer.components.Utils
+namespace LiteRoleplayServer.Components.Utils
 {
     public class ChatUtils : BaseScript
     {

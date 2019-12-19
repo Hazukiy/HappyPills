@@ -4,8 +4,7 @@ using System.Drawing;
 using System.Reflection;
 using System.Threading.Tasks;
 using CitizenFX.Core;
-using LiteRoleplayClient.components.Chat;
-using LiteRoleplay.Shared.Models;
+using LiteRoleplay.Shared;
 using static CitizenFX.Core.Native.API;
 
 namespace LiteRoleplayClient
@@ -24,12 +23,6 @@ namespace LiteRoleplayClient
         //Menu index
         private int MenuIndex { get; set; }
 
-        //Car boost
-        private float CarPower { get; set; }
-        private float CarTorque { get; set; }
-
-        private List<Vehicle> PersonalCars { get; set; }
-
         public InitialLoad()
         {
             //Built-in events
@@ -40,7 +33,7 @@ namespace LiteRoleplayClient
             EventHandlers[SharedProperties.ProfileCallback] += new Action<ProfileModel>(OnPlayerProfileCallback);
 
             //Set salary timer
-            PlayerSalaryTimer = SharedProperties.SalaryTimer;
+            PlayerSalaryTimer = SharedProperties.DefaultSalaryTimer;
 
             //Start salary timer
             Tick += PlayerSalaryTick;
@@ -51,13 +44,11 @@ namespace LiteRoleplayClient
             //Start menu tick
             Tick += MenuTick;
 
+            //Render in HUD
+            Tick += HudTick;
+
             //Load profile
             TriggerServerEvent(SharedProperties.EventLoadProfile);
-
-            //Load person cars as empty
-            PersonalCars = new List<Vehicle>();
-            CarPower = 10.0f;
-            CarTorque = 10.0f;
 
             //Notify
             Console.WriteLine($"[LiteRoleplay v{Assembly.GetExecutingAssembly().GetName().Version}][CLIENT] - Loaded successfully.");
@@ -75,13 +66,14 @@ namespace LiteRoleplayClient
             RegisterCommand("ban", new Action<int, List<object>, string>((source, args, raw) => { Command_BanPlayer(args); }), false);
             RegisterCommand("unban", new Action<int, List<object>, string>((source, args, raw) => { Command_UnBanPlayer(args); }), false);
             RegisterCommand("invokeowner", new Action<int, List<object>, string>((source, args, raw) => { Command_InvokeOwner(); }), false);
-            RegisterCommand("players", new Action<int, List<object>, string>((source, args, raw) => { Command_GetOnline(); }), false);
             RegisterCommand("admincar", new Action<int, List<object>, string>((source, args, raw) => { Command_AdminCar(args); }), false);
+            RegisterCommand("freeze", new Action<int, List<object>, string>((source, args, raw) => { Command_FreezePlayer(args); }), false);
         }
 
         private void OnPlayerSpawned()
         {
-            StartPlayerTeleport(new Player(GetPlayerIndex()).Handle, -1329.704f, -1512.436f, 4.379375f, 1.0f, false, true, false);
+            var player = new Player(GetPlayerIndex());
+            SpawnPlayer(player, SharedProperties.DefaultSpawn);
         }
         #endregion
 
@@ -90,20 +82,31 @@ namespace LiteRoleplayClient
         {
             if (profile != null && PlayerProfile == null)
             {
-                PlayerProfile = ConvertToProfile(profile);
-                Debug.WriteLine("Profile loaded from callback.");
-                ChatUtils.Instance.PrintToChat($"Profile Loaded: {PlayerProfile}", SharedProperties.ColorGood);
+                PlayerProfile = SharedProperties.ConvertToProfile(profile);
+                PrintToChat($"Profile Loaded: {PlayerProfile}", SharedProperties.ColorGood);
             }
             else
             {
-                //Do some trying logic here...
                 Debug.WriteLine("Critial error - failed to load profile.");
-                ChatUtils.Instance.PrintToChat("Failed to load profile", SharedProperties.ColorError);
+                PrintToChat("Failed to load profile.", SharedProperties.ColorError);
             }
         }
         #endregion
 
         #region Timers
+        private async Task HudTick()
+        {
+            SetTextFont(1);
+            SetTextColour(128, 128, 128, 255);
+            SetTextDropshadow(0, 0, 0, 0, 255);
+            SetTextEdge(1, 0, 0, 0, 150);
+            SetTextOutline();
+            SetTextEntry("String");
+            AddTextComponentString("This works");
+            DrawText(1.0f, 1.0f);
+            await Delay(1000);
+        }
+
         private async Task MenuTick()
         {
             //Draw Menu
@@ -121,37 +124,13 @@ namespace LiteRoleplayClient
                 if(!IsMenuOpen)
                 {
                     IsMenuOpen = true;
-                    ChatUtils.Instance.PrintToChat($"Menu Open", SharedProperties.ColorGood);
+                    PrintToChat($"Menu Open", SharedProperties.ColorGood);
                 }
                 else
                 {
                     IsMenuOpen = false;
-                    ChatUtils.Instance.PrintToChat($"Menu Closed", SharedProperties.ColorGood);
+                    PrintToChat($"Menu Closed", SharedProperties.ColorGood);
                 }
-            }
-
-            //KEYPAD UP (car Power up)
-            if (IsControlPressed(1, 127))
-            {
-                IncreaseCarPower();
-            }
-
-            //KEYPAD DOWN (car Power down)
-            if (IsControlPressed(1, 128))
-            {
-                DecreaseCarPower();
-            }
-
-            //ARROW RIGHT (car torque up)
-            if (IsControlPressed(1, 123))
-            {
-                IncreaseCarTorque();
-            }
-
-            //ARROW LEFT (car torque down)
-            if (IsControlPressed(1, 124))
-            {
-                DecreaseCarTorque();
             }
         }
 
@@ -172,10 +151,10 @@ namespace LiteRoleplayClient
                     TriggerServerEvent(SharedProperties.EventSaveProfile, PlayerProfile);
 
                     //Notify
-                    ChatUtils.Instance.PrintToChat($"You've received ${PlayerProfile.Salary} from your salary!", SharedProperties.ColorGood);
+                    PrintToChat($"You've received ${PlayerProfile.Salary} from your salary!", SharedProperties.ColorGood);
 
                     //Reset
-                    PlayerSalaryTimer = SharedProperties.SalaryTimer;
+                    PlayerSalaryTimer = SharedProperties.DefaultSalaryTimer;
                 }
                 await Delay(1000);
             }
@@ -194,11 +173,15 @@ namespace LiteRoleplayClient
         #endregion
 
         #region Non-Admin Commands
-        private void Command_GetOnline()
+        private void Command_GetProfile()
         {
-            foreach (var player in Players)
+            if (PlayerProfile != null)
             {
-                ChatUtils.Instance.PrintToChat($"Player {player.Name} (Handle: {player.Handle}, ServerID: {player.ServerId}, NetID: {player.Character.NetworkId})", SharedProperties.ColorNormal);
+                PrintToChat($"{PlayerProfile}", SharedProperties.ColorGood);
+            }
+            else
+            {
+                PrintToChat($"Profile was null.", SharedProperties.ColorError);
             }
         }
         #endregion
@@ -233,58 +216,113 @@ namespace LiteRoleplayClient
                     personalCar.Mods.LicensePlate = $"ADMINCAR";
                     personalCar.Mods.InstallModKit();
 
-                    //Speed
-                    //personalCar.EnginePowerMultiplier = CarPower;
-                    //personalCar.EngineTorqueMultiplier = CarTorque;
+                    //Speed adjustment
+                    personalCar.EnginePowerMultiplier = 30.0f;
+                    personalCar.EngineTorqueMultiplier = 30.0f;
 
                     //Spawn ped into car
                     Game.PlayerPed.SetIntoVehicle(personalCar, VehicleSeat.Driver);
 
-                    //Add personal car
-                    PersonalCars.Add(personalCar);
-
                     //Notify
-                    ChatUtils.Instance.PrintToChat("Your new admin car has spawned!", SharedProperties.ColorGood);
+                    PrintToChat("Your new admin car has spawned!", SharedProperties.ColorGood);
                 }
                 else
                 {
-                    ChatUtils.Instance.PrintToChat($"Could find model: {args[0]}", SharedProperties.ColorWarning);
+                    PrintToChat($"Could find model: {args[0]}", SharedProperties.ColorWarning);
                 }
             }
             else
             {
-                ChatUtils.Instance.PrintToChat("Usage: /admincar 'model name'", SharedProperties.ColorWarning);
+                PrintToChat("Usage: /admincar 'model name'", SharedProperties.ColorWarning);
             }
         }
         #endregion
 
         #region Management Commands 
-        private void Command_BanPlayer(List<object> args)
+        private void Command_FreezePlayer(List<object> args)
         {
-            if(args.Count == 3)
+            if(PlayerProfile.IsAdmin)
             {
-                var netID = Convert.ToInt32(args[0]);
-                var reason = args[1];
-                var hours = Convert.ToInt32(args[2]);
+                if(args.Count == 2)
+                {
+                    var netID = Convert.ToInt32(args[0]);
+                    var freezePlayer = Convert.ToInt32(args[1]);
 
-                TriggerServerEvent(SharedProperties.EventBanPlayer, new[] { netID, reason, hours });
+                    TriggerServerEvent(SharedProperties.EventFreezePlayer, new[] { netID, freezePlayer });
+                }
+                else
+                {
+                    PrintToChat("Usage: /freeze <netID> <1|0>", SharedProperties.ColorWarning);
+                }
             }
             else
             {
-                ChatUtils.Instance.PrintToChat("Usage: /ban <netid> 'reason' <hours>", SharedProperties.ColorWarning);
+                PrintToChat("You do not have permission to this.", SharedProperties.ColorError);
+            }
+        }
+
+        private void Command_KickPlayer(List<object> args)
+        {
+            if (PlayerProfile.IsAdmin)
+            {
+                if (args.Count == 2)
+                {
+                    var netID = Convert.ToInt32(args[0]);
+                    var reason = args[1];
+
+                    TriggerServerEvent(SharedProperties.EventKickPlayer, new[] { netID, reason });
+                }
+                else
+                {
+                    PrintToChat("Usage: /freeze <netID> <1|0>", SharedProperties.ColorWarning);
+                }
+            }
+            else
+            {
+                PrintToChat("You do not have permission to this.", SharedProperties.ColorError);
+            }
+        }
+
+        private void Command_BanPlayer(List<object> args)
+        {
+            if(PlayerProfile.IsAdmin)
+            {
+                if (args.Count == 3)
+                {
+                    var netID = Convert.ToInt32(args[0]);
+                    var reason = args[1];
+                    var hours = Convert.ToInt32(args[2]);
+
+                    TriggerServerEvent(SharedProperties.EventBanPlayer, new[] { netID, reason, hours });
+                }
+                else
+                {
+                    PrintToChat("Usage: /ban <netid> 'reason' <hours>", SharedProperties.ColorWarning);
+                }
+            }
+            else
+            {
+                PrintToChat("You do not have permission to this.", SharedProperties.ColorError);
             }
         }
 
         private void Command_UnBanPlayer(List<object> args)
         {
-            if (args.Count == 1)
+            if(PlayerProfile.IsAdmin)
             {
-                var dbID = Convert.ToInt32(args[0]);
-                TriggerServerEvent(SharedProperties.EventUnbanPlayer, new[] { dbID });
+                if (args.Count == 1)
+                {
+                    var dbID = Convert.ToInt32(args[0]);
+                    TriggerServerEvent(SharedProperties.EventUnbanPlayer, new[] { dbID });
+                }
+                else
+                {
+                    PrintToChat("Usage: /unban <dbID>", SharedProperties.ColorWarning);
+                }
             }
             else
             {
-                ChatUtils.Instance.PrintToChat("Usage: /unban <dbID>", SharedProperties.ColorWarning);
+                PrintToChat("You do not have permission to this.", SharedProperties.ColorError);
             }
         }
 
@@ -292,88 +330,21 @@ namespace LiteRoleplayClient
         {
             TriggerServerEvent(SharedProperties.EventInvokeOwnership);
         }
-
-        private void Command_GetProfile()
-        {
-            if(PlayerProfile != null)
-            {
-                ChatUtils.Instance.PrintToChat($"{PlayerProfile.ToString()}", SharedProperties.ColorGood);
-            }
-            else
-            {
-                ChatUtils.Instance.PrintToChat($"Profile was null.", SharedProperties.ColorError);
-            }
-        }
         #endregion
 
         #region Private Methods
-        private void IncreaseCarPower()
+        private void PrintToChat(string printArgs, int[] chatColor)
         {
-            var entityIndex = GetVehicleIndexFromEntityIndex(GetPlayerIndex());
-            var currentCar = new Vehicle(entityIndex);
-
-            CarPower += 500.0f;
-            currentCar.EnginePowerMultiplier = CarPower;
-
-            ChatUtils.Instance.PrintToChat($"Car Power Increased: {CarPower}", SharedProperties.ColorGood);
-        }
-
-        private void DecreaseCarPower()
-        {
-            var entityIndex = GetVehicleIndexFromEntityIndex(GetPlayerIndex());
-            var currentCar = new Vehicle(entityIndex);
-
-            ChatUtils.Instance.PrintToChat($"Driver: {currentCar.Driver} - {currentCar.DisplayName} - {currentCar.Model}", SharedProperties.ColorError);
-
-            var preCalc = CarPower - 500.0f;
-
-            if(preCalc > 0 && CarPower > 0)
+            TriggerEvent("chat:addMessage", new
             {
-                CarPower -= 500.0f;
-                currentCar.EnginePowerMultiplier = CarPower;
-
-                ChatUtils.Instance.PrintToChat($"Car Power Decreased: {CarPower}", SharedProperties.ColorError);
-            }
+                color = chatColor,
+                args = new[] { SharedProperties.ChatPrefix, $"{printArgs}" }
+            });
         }
 
-        private void IncreaseCarTorque()
+        private void SpawnPlayer(Player player, float[] spawnLoc)
         {
-            var entityIndex = GetVehicleIndexFromEntityIndex(GetPlayerIndex());
-            var currentCar = new Vehicle(entityIndex);
-
-            CarTorque += 500.0f;
-            currentCar.EngineTorqueMultiplier = CarTorque;
-
-            ChatUtils.Instance.PrintToChat($"Car Torque Increased: {CarTorque}", SharedProperties.ColorGood);
-        }
-
-        private void DecreaseCarTorque()
-        {
-            var entityIndex = GetVehicleIndexFromEntityIndex(GetPlayerIndex());
-            var currentCar = new Vehicle(entityIndex);
-            var preCalc = CarTorque - 500.0f;
-
-            if (preCalc > 0 && CarTorque > 0)
-            {
-                CarTorque -= 500.0f;
-                currentCar.EngineTorqueMultiplier = CarTorque;
-
-                ChatUtils.Instance.PrintToChat($"Car Torque Decreased: {CarTorque}", SharedProperties.ColorError);
-            }
-        }
-
-        private ProfileModel ConvertToProfile(dynamic obj)
-        {
-            return new ProfileModel()
-            {
-                Id = obj.Id,
-                LicenseID = obj.LicenseID,
-                Wallet = obj.Wallet,
-                Bank = obj.Bank,
-                Salary = obj.Salary,
-                Job = obj.Job,
-                IsWanted = obj.IsWanted
-            };
+            StartPlayerTeleport(player.Handle, spawnLoc[0], spawnLoc[1], spawnLoc[2], spawnLoc[3], false, true, false);
         }
         #endregion
     }

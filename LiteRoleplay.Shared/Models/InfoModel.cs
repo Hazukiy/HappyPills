@@ -1,6 +1,8 @@
-﻿using System;
+﻿//Class definition: Database info model for info collection.
 
-namespace LiteRoleplay.Shared.Models
+using System;
+
+namespace LiteRoleplay.Shared
 {
     public class InfoModel
     {

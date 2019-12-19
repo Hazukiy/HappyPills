@@ -1,11 +1,6 @@
-﻿using CitizenFX.Core;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿//Class definition: Database profile model for profile collection.
 
-namespace LiteRoleplay.Shared.Models
+namespace LiteRoleplay.Shared
 {
     public class ProfileModel
     {
@@ -20,7 +15,7 @@ namespace LiteRoleplay.Shared.Models
 
         public override string ToString()
         {
-            return $"{Id}. Wallet: ${Wallet} | Bank: ${Bank} | Salary: ${Salary} | Job: {Job} | IsWanted: {IsWanted} | IsAdmin: {IsAdmin}";
+            return $"ID: {Id} | Wallet: ${Wallet} | Bank: ${Bank} | Salary: ${Salary} | Job: {Job} | IsWanted: {IsWanted} | IsAdmin: {IsAdmin}";
         }
     }
 }

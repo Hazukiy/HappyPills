@@ -1,10 +1,6 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿//Class definition: Jobs model
 
-namespace LiteRoleplayServer.Models.Economy
+namespace LiteRoleplay.Shared
 {
     public class JobsModel
     {

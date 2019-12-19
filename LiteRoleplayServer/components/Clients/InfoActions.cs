@@ -1,13 +1,10 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using CitizenFX.Core;
 using LiteDB;
-using LiteRoleplay.Shared.Models;
+using LiteRoleplay.Shared;
 
-namespace LiteRoleplayServer.components.Clients
+namespace LiteRoleplayServer.Components.Clients
 {
     public class InfoActions : BaseScript
     {
@@ -109,6 +106,5 @@ namespace LiteRoleplayServer.components.Clients
             }
         }
         #endregion
-
     }
 }

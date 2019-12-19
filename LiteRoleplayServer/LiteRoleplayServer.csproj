@@ -48,15 +48,11 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="components\Admin\Commands.cs" />
-    <Compile Include="components\Clients\InfoActions.cs" />
-    <Compile Include="components\Clients\ProfileActions.cs" />
-    <Compile Include="components\SharedProperties.cs" />
-    <Compile Include="components\Utils\ChatUtils.cs" />
+    <Compile Include="Components\Admin\Commands.cs" />
+    <Compile Include="Components\Clients\InfoActions.cs" />
+    <Compile Include="Components\Clients\ProfileActions.cs" />
+    <Compile Include="Components\Utils\ChatUtils.cs" />
     <Compile Include="InitialServerLoad.cs" />
-    <Compile Include="Models\Economy\JobsModel.cs" />
-    <Compile Include="Models\Admin\AdminModel.cs" />
-    <Compile Include="Models\Admin\BanModel.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>

@@ -1,10 +1,6 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿//Class definition: Database model for admins collection.
 
-namespace LiteRoleplayServer.Models.Admin
+namespace LiteRoleplay.Shared
 {
     public class AdminModel
     {

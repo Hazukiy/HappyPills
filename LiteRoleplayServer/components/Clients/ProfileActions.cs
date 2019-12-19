@@ -1,12 +1,9 @@
 ﻿using System;
-using System.Collections.Generic;
 using CitizenFX.Core;
 using LiteDB;
-using LiteRoleplayServer.components.Utils;
-using LiteRoleplay.Shared.Models;
-using static CitizenFX.Core.Native.API;
+using LiteRoleplay.Shared;
 
-namespace LiteRoleplayServer.components.Clients
+namespace LiteRoleplayServer.Components.Clients
 {
     public class ProfileActions : BaseScript
     {
@@ -65,7 +62,7 @@ namespace LiteRoleplayServer.components.Clients
                 {
                     var col = db.GetCollection<ProfileModel>(SharedProperties.DatabaseTableProfile);
                     col.Update(playerProfile);
-                    Console.WriteLine($"Profile Saved({playerProfile.ToString()})");
+                    Console.WriteLine($"Profile saved = {playerProfile}");
                 }
             }
         }
@@ -107,14 +104,15 @@ namespace LiteRoleplayServer.components.Clients
                     Bank = SharedProperties.DefaultBank,
                     Salary = SharedProperties.DefaultSalary,
                     Job = SharedProperties.DefaultJob,
-                    IsWanted = false
+                    IsWanted = false,
+                    IsAdmin = false
                 };
 
                 //Insert new profile
                 col.Insert(newProfile);
 
                 //Notify
-                Console.WriteLine($"New profile inserted({newProfile.ToString()})");
+                Console.WriteLine($"New profile inserted = {newProfile}");
                 TriggerClientEvent(player, SharedProperties.ProfileCallback, newProfile);
             }
         }
@@ -129,7 +127,8 @@ namespace LiteRoleplayServer.components.Clients
                 Bank = obj.Bank,
                 Salary = obj.Salary,
                 Job = obj.Job,
-                IsWanted = obj.IsWanted == null ? false : true
+                IsWanted = obj.IsWanted,
+                IsAdmin = obj.IsAdmin
             };
         }
         #endregion

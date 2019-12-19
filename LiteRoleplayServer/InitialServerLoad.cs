@@ -1,10 +1,10 @@
 ﻿using System;
 using System.Reflection;
 using CitizenFX.Core;
-using LiteRoleplayServer.components.Admin;
-using LiteRoleplayServer.components.Clients;
-using LiteRoleplayServer.components.Utils;
-using LiteRoleplay.Shared.Models;
+using LiteRoleplayServer.Components.Admin;
+using LiteRoleplayServer.Components.Clients;
+using LiteRoleplayServer.Components.Utils;
+using LiteRoleplay.Shared;
 
 namespace LiteRoleplayServer
 {
@@ -24,6 +24,8 @@ namespace LiteRoleplayServer
             EventHandlers[SharedProperties.EventInvokeOwnership] += new Action<Player>(Commands.Instance.InvokeOwnership);
             EventHandlers[SharedProperties.EventBanPlayer] += new Action<Player, int, string, int>(Commands.Instance.BanPlayer);
             EventHandlers[SharedProperties.EventUnbanPlayer] += new Action<Player, int>(Commands.Instance.UnbanPlayer);
+            EventHandlers[SharedProperties.EventKickPlayer] += new Action<Player, int, string>(Commands.Instance.KickPlayer);
+            EventHandlers[SharedProperties.EventFreezePlayer] += new Action<Player, int, int>(Commands.Instance.FreezePlayer);
 
             //Notify that server is loaded
             Console.WriteLine($"[LiteRoleplay v{Assembly.GetExecutingAssembly().GetName().Version}][SERVER] - Loaded successfully.");

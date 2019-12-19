@@ -1,6 +1,4 @@
-﻿using LiteRoleplayServer.Models.Economy;
-
-namespace LiteRoleplayServer
+﻿namespace LiteRoleplay.Shared
 {
     public class SharedProperties
     {
@@ -23,12 +21,8 @@ namespace LiteRoleplayServer
         public static int[] ColorWarning = { 255, 153, 42 };
         public static int[] ColorError = { 238, 58, 67 };
 
-        //Default player profile
-        public static int DefaultWallet = 0;
-        public static int DefaultBank = 300; //$300
-        public static int DefaultSalary = 2; //$2 every minute
-        public static int DefaultSalaryCount = 60; //1 minute
-        public const string DefaultJob = JobsModel.Unemployed;
+        //Spawning
+        public static float[] DefaultSpawn = { -1329.704f, -1512.436f, 4.379375f, 1.0f }; //On venice beach
 
         //Server -> Client Events/Callbacks
         public const string ProfileCallback = "sendProfile";
@@ -39,5 +33,30 @@ namespace LiteRoleplayServer
         public const string EventInvokeOwnership = "netInvokeOwnership";
         public const string EventBanPlayer = "netBanPlayer";
         public const string EventUnbanPlayer = "netUnbanPlayer";
+        public const string EventFreezePlayer = "netFreezePlayer";
+        public const string EventKickPlayer = "netKickPlayer";
+
+        //Player profile
+        public static int DefaultWallet = 0;
+        public static int DefaultBank = 300; //$300
+        public static int DefaultSalary = 2; //$2 every minute
+        public static int DefaultSalaryTimer = 60; //1 minute
+        public const string DefaultJob = JobsModel.Unemployed;
+
+        //Custom methods
+        public static ProfileModel ConvertToProfile(dynamic obj)
+        {
+            return new ProfileModel()
+            {
+                Id = obj.Id,
+                LicenseID = obj.LicenseID,
+                Wallet = obj.Wallet,
+                Bank = obj.Bank,
+                Salary = obj.Salary,
+                Job = obj.Job,
+                IsWanted = obj.IsWanted,
+                IsAdmin = obj.IsAdmin
+            };
+        }
     }
 }

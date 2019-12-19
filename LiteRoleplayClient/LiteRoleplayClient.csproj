@@ -44,8 +44,6 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="components\Chat\ChatUtils.cs" />
-    <Compile Include="components\SharedProperties.cs" />
     <Compile Include="InitialLoad.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
