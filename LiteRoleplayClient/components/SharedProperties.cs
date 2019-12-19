@@ -11,7 +11,7 @@
         public static int[] ColorWarning = { 255, 153, 42 };
         public static int[] ColorError = { 238, 58, 67 };
 
-        //Defaukts
+        //Default salary timer
         public static int SalaryTimer = 60;
 
         //Server -> Client Events/Callbacks

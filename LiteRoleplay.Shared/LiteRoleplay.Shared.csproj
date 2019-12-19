@@ -4,11 +4,11 @@
   <PropertyGroup>
     <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
     <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
-    <ProjectGuid>{AD4F2EBE-BD7E-4C15-9FF4-E81EDAE783B4}</ProjectGuid>
+    <ProjectGuid>{A7ACB8AF-281C-45AD-84D9-B1BC666FC5E4}</ProjectGuid>
     <OutputType>Library</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
-    <RootNamespace>LiteRoleplayServer</RootNamespace>
-    <AssemblyName>LiteRoleplayServer.net</AssemblyName>
+    <RootNamespace>LiteRoleplay.Shared</RootNamespace>
+    <AssemblyName>LiteRoleplay.Shared.net</AssemblyName>
     <TargetFrameworkVersion>v4.5.2</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
     <Deterministic>true</Deterministic>
@@ -17,7 +17,7 @@
     <DebugSymbols>true</DebugSymbols>
     <DebugType>full</DebugType>
     <Optimize>false</Optimize>
-    <OutputPath>..\..\..\..\FiveMServerData\cfx-server-data\resources\literp\server\</OutputPath>
+    <OutputPath>bin\Debug\</OutputPath>
     <DefineConstants>DEBUG;TRACE</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
@@ -31,12 +31,8 @@
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
   <ItemGroup>
-    <Reference Include="CitizenFX.Core, Version=0.0.0.0, Culture=neutral, processorArchitecture=AMD64">
-      <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\libs\server\CitizenFX.Core.dll</HintPath>
-    </Reference>
-    <Reference Include="LiteDB, Version=4.1.4.0, Culture=neutral, PublicKeyToken=4ee40123013c9f27, processorArchitecture=MSIL">
-      <HintPath>..\packages\LiteDB.4.1.4\lib\net40\LiteDB.dll</HintPath>
+    <Reference Include="CitizenFX.Core">
+      <HintPath>..\libs\client\CitizenFX.Core.dll</HintPath>
     </Reference>
     <Reference Include="System" />
     <Reference Include="System.Core" />
@@ -48,25 +44,9 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="components\Admin\Commands.cs" />
-    <Compile Include="components\Clients\InfoActions.cs" />
-    <Compile Include="components\Clients\ProfileActions.cs" />
-    <Compile Include="components\SharedProperties.cs" />
-    <Compile Include="components\Utils\ChatUtils.cs" />
-    <Compile Include="InitialServerLoad.cs" />
-    <Compile Include="Models\Economy\JobsModel.cs" />
-    <Compile Include="Models\Admin\AdminModel.cs" />
-    <Compile Include="Models\Admin\BanModel.cs" />
+    <Compile Include="Models\InfoModel.cs" />
+    <Compile Include="Models\ProfileModel.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
-  </ItemGroup>
-  <ItemGroup>
-    <None Include="packages.config" />
-  </ItemGroup>
-  <ItemGroup>
-    <ProjectReference Include="..\LiteRoleplay.Shared\LiteRoleplay.Shared.csproj">
-      <Project>{a7acb8af-281c-45ad-84d9-b1bc666fc5e4}</Project>
-      <Name>LiteRoleplay.Shared</Name>
-    </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>

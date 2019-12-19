@@ -3,7 +3,7 @@ using CitizenFX.Core;
 using LiteDB;
 using LiteRoleplayServer.components.Utils;
 using LiteRoleplayServer.Models.Admin;
-using LiteRoleplayServer.Models.Player;
+using LiteRoleplay.Shared.Models;
 using static CitizenFX.Core.Native.API;
 
 namespace LiteRoleplayServer.components.Admin

@@ -5,7 +5,7 @@ using System.Reflection;
 using System.Threading.Tasks;
 using CitizenFX.Core;
 using LiteRoleplayClient.components.Chat;
-using LiteRoleplayClient.components.Models.Local;
+using LiteRoleplay.Shared.Models;
 using static CitizenFX.Core.Native.API;
 
 namespace LiteRoleplayClient
@@ -24,12 +24,11 @@ namespace LiteRoleplayClient
         //Menu index
         private int MenuIndex { get; set; }
 
-        //Local instance of car
-        private List<Vehicle> PersonalCars { get; set; }
-
         //Car boost
         private float CarPower { get; set; }
         private float CarTorque { get; set; }
+
+        private List<Vehicle> PersonalCars { get; set; }
 
         public InitialLoad()
         {
@@ -71,7 +70,6 @@ namespace LiteRoleplayClient
 
             //Player commands
             RegisterCommand("profile", new Action<int, List<object>, string>((source, args, raw) => { Command_GetProfile(); }), false);
-
 
             //Admin commands
             RegisterCommand("ban", new Action<int, List<object>, string>((source, args, raw) => { Command_BanPlayer(args); }), false);

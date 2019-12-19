@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace LiteRoleplayServer.Models.Player
+namespace LiteRoleplay.Shared.Models
 {
     public class InfoModel
     {
@@ -16,13 +16,7 @@ namespace LiteRoleplayServer.Models.Player
 
         public override string ToString()
         {
-            var returnString = $"Info Profile({LicenseID} - {IP}) - Name: {Name} FirstLogin: {FirstLoginDate} LastLogin: {LastLoginDate} IsAdmin: {IsAdmin} IsBanned: {IsBanned} - AllNames:";
-            foreach(var item in AllNames)
-            {
-                returnString += $" {item}";
-            }
-
-            return returnString;
+            return $"Id: {Id} | LicenseID: {LicenseID} | Name: {Name} | FirstLoginDate: {FirstLoginDate} | LastLoginDate: {LastLoginDate} | IP: {IP} | IsAdmin: {IsAdmin} | IsBanned: {IsBanned}";
         }
     }
 }

@@ -5,7 +5,7 @@ using System.Text;
 using System.Threading.Tasks;
 using CitizenFX.Core;
 using LiteDB;
-using LiteRoleplayServer.Models.Player;
+using LiteRoleplay.Shared.Models;
 
 namespace LiteRoleplayServer.components.Clients
 {

@@ -45,11 +45,15 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="components\Chat\ChatUtils.cs" />
-    <Compile Include="Models\Local\ProfileModel.cs" />
     <Compile Include="components\SharedProperties.cs" />
     <Compile Include="InitialLoad.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
-  <ItemGroup />
+  <ItemGroup>
+    <ProjectReference Include="..\LiteRoleplay.Shared\LiteRoleplay.Shared.csproj">
+      <Project>{a7acb8af-281c-45ad-84d9-b1bc666fc5e4}</Project>
+      <Name>LiteRoleplay.Shared</Name>
+    </ProjectReference>
+  </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>

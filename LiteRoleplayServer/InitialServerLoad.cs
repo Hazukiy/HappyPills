@@ -4,7 +4,7 @@ using CitizenFX.Core;
 using LiteRoleplayServer.components.Admin;
 using LiteRoleplayServer.components.Clients;
 using LiteRoleplayServer.components.Utils;
-using LiteRoleplayServer.Models.Player;
+using LiteRoleplay.Shared.Models;
 
 namespace LiteRoleplayServer
 {

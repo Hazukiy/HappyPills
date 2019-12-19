@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using CitizenFX.Core;
 using LiteDB;
 using LiteRoleplayServer.components.Utils;
-using LiteRoleplayServer.Models.Player;
+using LiteRoleplay.Shared.Models;
 using static CitizenFX.Core.Native.API;
 
 namespace LiteRoleplayServer.components.Clients
@@ -118,9 +118,7 @@ namespace LiteRoleplayServer.components.Clients
                 TriggerClientEvent(player, SharedProperties.ProfileCallback, newProfile);
             }
         }
-        #endregion
 
-        #region Private Methods
         private ProfileModel ConvertToProfile(dynamic obj)
         {
             return new ProfileModel()
