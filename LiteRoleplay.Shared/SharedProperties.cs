@@ -26,6 +26,7 @@
 
         //Server -> Client Events/Callbacks
         public const string ProfileCallback = "sendProfile";
+        public const string AdminCallback = "sendAdmin";
 
         //Client - > Server Events/Callbacks
         public const string EventLoadProfile = "netLoadProfile";

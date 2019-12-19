@@ -224,11 +224,13 @@ namespace LiteRoleplayServer.Components.Admin
                 {
                     var col = db.GetCollection<AdminModel>(SharedProperties.DatabaseTableAdmins);
                     var col2 = db.GetCollection<InfoModel>(SharedProperties.DatabaseTableInfo);
+                    var col3 = db.GetCollection<ProfileModel>(SharedProperties.DatabaseTableProfile);
 
                     var adminProfile = col.FindOne(x => x.LicenseID.Equals(playerLicense));
                     var playerInfo = col2.FindOne(x => x.LicenseID.Equals(playerLicense));
+                    var playerProfile = col3.FindOne(x => x.LicenseID.Equals(playerLicense));
 
-                    if (adminProfile == null && playerInfo != null)
+                    if (adminProfile == null && playerInfo != null && playerProfile != null)
                     {
                         //Construct new admin profile.
                         AdminModel newProfile = new AdminModel()
@@ -239,10 +241,15 @@ namespace LiteRoleplayServer.Components.Admin
 
                         //Update admin status
                         playerInfo.IsAdmin = true;
+                        playerProfile.IsAdmin = true;
 
                         //Insert & update new admin
                         col.Insert(newProfile);
                         col2.Update(playerInfo);
+                        col3.Update(playerProfile);
+
+                        //Invoke callback to update on clientside
+                        TriggerClientEvent(player, SharedProperties.AdminCallback, 1);
 
                         //Notify
                         ChatUtils.Instance.PrintToClient(player, "You've invoked ownership of the server.", SharedProperties.ColorGood);

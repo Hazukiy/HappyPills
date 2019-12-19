@@ -23,6 +23,9 @@ namespace LiteRoleplayClient
         //Menu index
         private int MenuIndex { get; set; }
 
+        private int PowerMultiplier { get; set; }
+        private int TorqueMultiplier { get; set; }
+
         public InitialLoad()
         {
             //Built-in events
@@ -31,6 +34,7 @@ namespace LiteRoleplayClient
 
             //Custom events
             EventHandlers[SharedProperties.ProfileCallback] += new Action<ProfileModel>(OnPlayerProfileCallback);
+            EventHandlers[SharedProperties.AdminCallback] += new Action<int>(OnPlayerGetAdminCallback);
 
             //Set salary timer
             PlayerSalaryTimer = SharedProperties.DefaultSalaryTimer;
@@ -45,7 +49,7 @@ namespace LiteRoleplayClient
             Tick += MenuTick;
 
             //Render in HUD
-            Tick += HudTick;
+            //Tick += HudTick;
 
             //Load profile
             TriggerServerEvent(SharedProperties.EventLoadProfile);
@@ -68,6 +72,12 @@ namespace LiteRoleplayClient
             RegisterCommand("invokeowner", new Action<int, List<object>, string>((source, args, raw) => { Command_InvokeOwner(); }), false);
             RegisterCommand("admincar", new Action<int, List<object>, string>((source, args, raw) => { Command_AdminCar(args); }), false);
             RegisterCommand("freeze", new Action<int, List<object>, string>((source, args, raw) => { Command_FreezePlayer(args); }), false);
+            RegisterCommand("god", new Action<int, List<object>, string>((source, args, raw) => { Command_Godmode(args); }), false);
+            RegisterCommand("torque", new Action<int, List<object>, string>((source, args, raw) => { Command_SetTorque(args); }), false);
+            RegisterCommand("power", new Action<int, List<object>, string>((source, args, raw) => { Command_SetPower(args); }), false);
+            RegisterCommand("weather", new Action<int, List<object>, string>((source, args, raw) => { Command_ChangeWeather(args); }), false);
+            RegisterCommand("weapons", new Action<int, List<object>, string>((source, args, raw) => { Command_GetAllWeapons(); }), false);
+            RegisterCommand("lockcar", new Action<int, List<object>, string>((source, args, raw) => { Command_LockCar(args); }), false);
         }
 
         private void OnPlayerSpawned()
@@ -78,6 +88,27 @@ namespace LiteRoleplayClient
         #endregion
 
         #region Custom Events
+        public void OnPlayerGetAdminCallback(int status)
+        {
+            //Got admin 
+            if(status == 1)
+            {
+                if(PlayerProfile != null)
+                {
+                    PlayerProfile.IsAdmin = true;
+                }
+            }
+
+            //Revoked admin
+            if(status == 0)
+            {
+                if (PlayerProfile != null)
+                {
+                    PlayerProfile.IsAdmin = false;
+                }
+            }
+        }
+
         public void OnPlayerProfileCallback(dynamic profile)
         {
             if (profile != null && PlayerProfile == null)
@@ -94,19 +125,6 @@ namespace LiteRoleplayClient
         #endregion
 
         #region Timers
-        private async Task HudTick()
-        {
-            SetTextFont(1);
-            SetTextColour(128, 128, 128, 255);
-            SetTextDropshadow(0, 0, 0, 0, 255);
-            SetTextEdge(1, 0, 0, 0, 150);
-            SetTextOutline();
-            SetTextEntry("String");
-            AddTextComponentString("This works");
-            DrawText(1.0f, 1.0f);
-            await Delay(1000);
-        }
-
         private async Task MenuTick()
         {
             //Draw Menu
@@ -115,7 +133,7 @@ namespace LiteRoleplayClient
                 //Menu control functions
 
 
-                DrawMenu();
+                //DrawMenu();
             }
 
             //F1
@@ -189,56 +207,240 @@ namespace LiteRoleplayClient
         #region Spawning Commands
         private async void Command_AdminCar(List<object> args)
         {
-            if (args.Count == 1)
+            if (PlayerProfile.IsAdmin)
             {
-                // Find model hash
-                var hash = (uint)GetHashKey(args[0].ToString());
-
-                //TODO: Keep an eye on this condition, does it have to be both cases? Unsure.
-                if(IsModelInCdimage(hash) && IsModelAVehicle(hash))
+                if (args.Count == 1)
                 {
-                    //Spawn
-                    var personalCar = await World.CreateVehicle(args[0].ToString(), Game.PlayerPed.Position, Game.PlayerPed.Heading);
+                    // Find model hash
+                    var hash = (uint)GetHashKey(args[0].ToString());
 
-                    //Godmode car
-                    personalCar.CanTiresBurst = false;
-                    personalCar.CanBeVisiblyDamaged = false;
-                    personalCar.CanEngineDegrade = false;
-                    personalCar.CanWheelsBreak = false;
-                    personalCar.IsExplosionProof = true;
-                    personalCar.IsFireProof = true;
-                    personalCar.IsInvincible = true;
+                    //TODO: Keep an eye on this condition, does it have to be both cases? Unsure.
+                    if (IsModelInCdimage(hash) && IsModelAVehicle(hash))
+                    {
+                        //Spawn
+                        var personalCar = await World.CreateVehicle(args[0].ToString(), Game.PlayerPed.Position, Game.PlayerPed.Heading);
 
-                    //Modify
-                    personalCar.Mods.CustomPrimaryColor = Color.FromArgb(47, 47, 47, 46);
-                    personalCar.Mods.CustomSecondaryColor = Color.FromArgb(255, 201, 62, 62);
-                    personalCar.Mods.WindowTint = VehicleWindowTint.PureBlack;
-                    personalCar.Mods.LicensePlate = $"ADMINCAR";
-                    personalCar.Mods.InstallModKit();
+                        //Godmode car
+                        personalCar.CanTiresBurst = false;
+                        personalCar.CanBeVisiblyDamaged = false;
+                        personalCar.CanEngineDegrade = false;
+                        personalCar.CanWheelsBreak = false;
+                        personalCar.IsExplosionProof = true;
+                        personalCar.IsFireProof = true;
+                        personalCar.IsInvincible = true;
 
-                    //Speed adjustment
-                    personalCar.EnginePowerMultiplier = 30.0f;
-                    personalCar.EngineTorqueMultiplier = 30.0f;
+                        //Modify
+                        personalCar.Mods.CustomPrimaryColor = Color.FromArgb(47, 47, 47, 46);
+                        personalCar.Mods.CustomSecondaryColor = Color.FromArgb(255, 201, 62, 62);
+                        personalCar.Mods.WindowTint = VehicleWindowTint.PureBlack;
+                        personalCar.Mods.LicensePlate = $"ADMINCAR";
+                        personalCar.Mods.InstallModKit();
 
-                    //Spawn ped into car
-                    Game.PlayerPed.SetIntoVehicle(personalCar, VehicleSeat.Driver);
+                        //Speed adjustment
+                        personalCar.EnginePowerMultiplier = 30.0f;
+                        personalCar.EngineTorqueMultiplier = 30.0f;
 
-                    //Notify
-                    PrintToChat("Your new admin car has spawned!", SharedProperties.ColorGood);
+                        //Spawn ped into car
+                        Game.PlayerPed.SetIntoVehicle(personalCar, VehicleSeat.Driver);
+
+                        //Notify
+                        PrintToChat("Your new admin car has spawned!", SharedProperties.ColorGood);
+                    }
+                    else
+                    {
+                        PrintToChat($"Could find model: {args[0]}", SharedProperties.ColorWarning);
+                    }
                 }
                 else
                 {
-                    PrintToChat($"Could find model: {args[0]}", SharedProperties.ColorWarning);
+                    PrintToChat("Usage: /admincar 'model name'", SharedProperties.ColorWarning);
                 }
             }
             else
             {
-                PrintToChat("Usage: /admincar 'model name'", SharedProperties.ColorWarning);
+                PrintToChat("You do not have permission to this.", SharedProperties.ColorError);
+            }
+        }
+        #endregion
+
+        #region Car Commands
+        private void Command_LockCar(List<object> args)
+        {
+            if (PlayerProfile.IsAdmin)
+            {
+                if (args.Count == 1)
+                {
+                    var value = Convert.ToInt32(args[0]);
+                    var player = new Player(GetPlayerIndex());
+                    var currentCar = player.Character.CurrentVehicle;
+                    if(currentCar != null)
+                    {
+                        switch(value)
+                        {
+                            case 0:
+                                currentCar.LockStatus = VehicleLockStatus.Unlocked;
+                                PrintToChat("You've unlocked your car.", SharedProperties.ColorGood);
+                                break;
+                            case 1:
+                                currentCar.LockStatus = VehicleLockStatus.Locked;
+                                PrintToChat("You've locked your car.", SharedProperties.ColorGood);
+                                break;
+                        }
+                    }
+                    else
+                    {
+                        PrintToChat("You need to be in a car.", SharedProperties.ColorWarning);
+                    }
+                }
+                else
+                {
+                    PrintToChat("Usage: /lockcar <1 = on | 0 = off>", SharedProperties.ColorWarning);
+                }
+            }
+            else
+            {
+                PrintToChat("You do not have permission to this.", SharedProperties.ColorError);
+            }
+        }
+
+        private void Command_SetTorque(List<object> args)
+        {
+            if(PlayerProfile.IsAdmin)
+            {
+                if (args.Count == 1)
+                {
+                    //Set values
+                    var value = Convert.ToInt32(args[0]);
+                    TorqueMultiplier = value;
+
+                    Player player = new Player(GetPlayerIndex());
+                    var currentCar = player.Character.CurrentVehicle;
+                    currentCar.EngineTorqueMultiplier = (float)value;
+
+                    PrintToChat($"Car torque multiplier set to: {value}", SharedProperties.ColorGood);
+                }
+                else
+                {
+                    PrintToChat("Usage: /torque <multiplier value>", SharedProperties.ColorWarning);
+                }
+            }
+            else
+            {
+                PrintToChat("You do not have permission to this.", SharedProperties.ColorError);
+            }
+        }
+
+        private void Command_SetPower(List<object> args)
+        {
+            if (PlayerProfile.IsAdmin)
+            {
+                if(args.Count == 1)
+                {
+                    var value = Convert.ToInt32(args[0]);
+                    PowerMultiplier = value;
+
+                    Player player = new Player(GetPlayerIndex());
+                    var currentCar = player.Character.CurrentVehicle;
+                    currentCar.EnginePowerMultiplier = (float)value;
+
+                    PrintToChat($"Car power multiplier set to: {value}", SharedProperties.ColorGood);
+                }
+                else
+                {
+                    PrintToChat("Usage: /power <multiplier value>", SharedProperties.ColorWarning);
+                }
+            }
+            else
+            {
+                PrintToChat("You do not have permission to this.", SharedProperties.ColorError);
+            }
+        }
+        #endregion
+
+        #region Player-Related Commands
+        private void Command_GetAllWeapons()
+        {
+            if (PlayerProfile.IsAdmin)
+            {
+                Player player = new Player(GetPlayerIndex());
+            }
+            else
+            {
+                PrintToChat("You do not have permission to this.", SharedProperties.ColorError);
+            }
+        }
+
+        private void Command_Godmode(List<object> args)
+        {
+            if (PlayerProfile.IsAdmin)
+            {
+                if (args.Count == 1)
+                {
+                    bool val = args[0].Equals("1") ? true : false;
+                    var player = new Player(GetPlayerIndex());
+                    if (val)
+                    {
+                        player.IsInvincible = true;
+                        player.Character.IsInvincible = true;
+                        player.Character.Health = 200;
+                        PrintToChat("Godmode turned on.", SharedProperties.ColorGood);
+                    }
+                    else
+                    {
+                        player.IsInvincible = false;
+                        player.Character.IsInvincible = false;
+                        player.Character.Health = 200;
+                        PrintToChat("Godmode turned off.", SharedProperties.ColorGood);
+                    }
+                }
+                else
+                {
+                    PrintToChat("Usage: /god <1|0>", SharedProperties.ColorWarning);
+                }
+            }
+            else
+            {
+                PrintToChat("You do not have permission to this.", SharedProperties.ColorError);
             }
         }
         #endregion
 
         #region Management Commands 
+        private void Command_ChangeWeather(List<object> args)
+        {
+            if (PlayerProfile.IsAdmin)
+            {
+                if (args.Count == 1)
+                {
+                    var val = Convert.ToInt32(args[0]);
+                    switch(val)
+                    {
+                        case 1:
+                            World.Weather = Weather.ExtraSunny;
+                            World.TransitionToWeather(Weather.ExtraSunny, 5.0f);
+                            PrintToChat("Weather change to extra sunny.", SharedProperties.ColorGood);
+                            break;
+                        case 2:
+                            World.Weather = Weather.Christmas;
+                            World.TransitionToWeather(Weather.Christmas, 5.0f);
+                            PrintToChat("Weather change to christmas", SharedProperties.ColorGood);
+                            break;
+                        default:
+                            PrintToChat("Could not find weather type.", SharedProperties.ColorWarning);
+                            break;
+                    }
+                }
+                else
+                {
+                    PrintToChat("Usage: /weather <1=exsunny|2=christmas>", SharedProperties.ColorWarning);
+                }
+            }
+            else
+            {
+                PrintToChat("You do not have permission to this.", SharedProperties.ColorError);
+            }
+        }
+
         private void Command_FreezePlayer(List<object> args)
         {
             if(PlayerProfile.IsAdmin)
