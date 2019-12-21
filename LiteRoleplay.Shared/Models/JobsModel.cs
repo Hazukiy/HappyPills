@@ -1,31 +1,19 @@
 ﻿//Class definition: Jobs model
-
 namespace LiteRoleplay.Shared
 {
     public class JobsModel
     {
-        //Default
-        public const string Unemployed = "Unemployed";
+        public int JobID { get; set; }
+        public string JobName { get; set; }
+        public string[] Models { get; set; }
+        public int Salary { get; set; }
+        public bool IsPolice { get; set; }
+        public bool IsAdmin { get; set; }
+        public string[] SpawnWeapons{ get; set; }
 
-        //Authority jobs
-        public const string President = "President";
-        public const string Mayor = "Mayor";
-        public const string PoliceChief = "Police Chief";
-        public const string PoliceOfficer = "Police Officer";
-        public const string BountyHunter = "Bounty Hunter";
-
-        //Emergency jobs
-        public const string Paramedic = "Paramedic";
-        public const string Fireman = "Fireman";
-        public const string Mechanic = "Mechanic"; 
-
-        //Standard jobs
-        public const string Chef = "Chef";
-        public const string StreetCleaner = "Street Cleaner";
-        public const string StreetRacer = "Street Racer";
-
-        //Illigal jobs
-        public const string DrugLord = "Drug Lord";
-        public const string DrugMember = "Drug Member";
+        public override string ToString()
+        {
+            return JobName;
+        }
     }
 }

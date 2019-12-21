@@ -2,6 +2,7 @@
 using CitizenFX.Core;
 using LiteDB;
 using LiteRoleplay.Shared;
+using LiteRoleplayServer.Components.Utils;
 
 namespace LiteRoleplayServer.Components.Clients
 {
@@ -67,6 +68,32 @@ namespace LiteRoleplayServer.Components.Clients
             }
         }
 
+        public void DepositWallet([FromSource]Player player, int amount)
+        {
+            var playerLicense = player.Identifiers["license"];
+            using (var db = new LiteDatabase(SharedProperties.DatabaseName))
+            {
+                var col = db.GetCollection<ProfileModel>(SharedProperties.DatabaseTableProfile);
+                var playerProfile = col.FindOne(x => x.LicenseID.Equals(playerLicense));
+                if (playerProfile != null)
+                {
+                    playerProfile.Bank += amount;
+                    playerProfile.Wallet -= amount;
+                    col.Update(playerProfile);
+
+                    //Update local profile
+                    TriggerClientEvent(player, SharedProperties.ProfileCallback, playerProfile);
+
+                    //Notify (TODO: Formatting on number i.e. 1,000,000 instead of 1000000)
+                    ChatUtils.Instance.PrintToClient(player, $"You've deposited ${amount}.", SharedProperties.ColorGood);
+                }
+            }
+        }
+
+        public void WithdrawBank([FromSource]Player player, int amount)
+        {
+
+        }
         #region Private Methods
         /// <summary>
         /// Returns true if player already has a profile

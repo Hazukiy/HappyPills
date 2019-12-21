@@ -9,7 +9,7 @@ namespace LiteRoleplay.Shared
         public int Wallet { get; set; }
         public int Bank { get; set; }
         public int Salary { get; set; }
-        public string Job { get; set; }
+        public int Job { get; set; }
         public bool IsWanted { get; set; }
         public bool IsAdmin { get; set; }
 

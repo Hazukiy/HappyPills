@@ -59,7 +59,7 @@ namespace LiteRoleplayServer.Components.Admin
             {
                 var col = db.GetCollection<BanModel>(SharedProperties.DatabaseTableBanned);
                 var doesExist = col.Exists(x => x.LicenseID.Equals(id));
-                if(doesExist)
+                if (doesExist)
                 {
                     retVal = col.FindOne(x => x.LicenseID.Equals(id));
                 }
@@ -69,6 +69,46 @@ namespace LiteRoleplayServer.Components.Admin
         #endregion
 
         #region Banning/Kicking
+        /// <summary>
+        /// Bans player via licenseID
+        /// </summary>
+        /// <param name="player"></param>
+        /// <param name="licenseID"></param>
+        /// <param name="reason"></param>
+        /// <param name="hours"></param>
+        public void AddBan([FromSource]Player player, string licenseID, string reason, int hours)
+        {
+            //Construct model
+            BanModel newBan = new BanModel()
+            {
+                LicenseID = licenseID,
+                BanReason = reason,
+                BannedBy = player.Name,
+                FirstBanDate = DateTime.UtcNow,
+                BannedUntil = DateTime.UtcNow.AddHours(hours),
+            };
+
+            //Insert new ban
+            using (var db = new LiteDatabase(SharedProperties.DatabaseName))
+            {
+                var col = db.GetCollection<BanModel>(SharedProperties.DatabaseTableBanned);
+                col.Insert(newBan);
+            }
+
+            //Update player info
+            using (var db = new LiteDatabase(SharedProperties.DatabaseName))
+            {
+                var col = db.GetCollection<InfoModel>(SharedProperties.DatabaseTableInfo);
+                var playerInfo = col.FindOne(x => x.LicenseID.Equals(licenseID));
+                playerInfo.IsBanned = true;
+                col.Update(playerInfo);
+            }
+
+            //Notify server
+            Console.WriteLine($"Added ban for {hours} hours with license id {licenseID} for {reason}");
+            ChatUtils.Instance.PrintToClient(player, $"Added ban for {hours} hours with license id {licenseID} for {reason}", SharedProperties.ColorGood);
+        }
+
         public void KickPlayer([FromSource]Player player, int netID, string reason)
         {
             var target = Players[netID];
@@ -97,7 +137,7 @@ namespace LiteRoleplayServer.Components.Admin
         public void BanPlayer([FromSource]Player player, int netID, string reason, int hours)
         {
             var target = Players[netID];
-            if(target != null)
+            if (target != null)
             {
                 //Construct model
                 BanModel newBan = new BanModel()
@@ -187,7 +227,7 @@ namespace LiteRoleplayServer.Components.Admin
         public void FreezePlayer([FromSource] Player player, int netID, int freeze)
         {
             var target = Players[netID];
-            if(target != null)
+            if (target != null)
             {
                 var freezeTarget = freeze == 1 ? true : false;
                 target.Character.IsPositionFrozen = freezeTarget;
@@ -266,6 +306,113 @@ namespace LiteRoleplayServer.Components.Admin
                 Console.WriteLine($"Warning, player {player.Name} ({player.EndPoint} - {playerLicense}): Tried to access the invoke ownership command.");
             }
         }
-        #endregion
+        public void GiveAdmin([FromSource]Player player, int netID)
+        {
+            var target = Players[netID];
+            if (target != null)
+            {
+                var targetLicense = target.Identifiers["license"];
+                using (var db = new LiteDatabase(SharedProperties.DatabaseName))
+                {
+                    var col = db.GetCollection<AdminModel>(SharedProperties.DatabaseTableAdmins);
+                    var col2 = db.GetCollection<InfoModel>(SharedProperties.DatabaseTableInfo);
+                    var col3 = db.GetCollection<ProfileModel>(SharedProperties.DatabaseTableProfile);
+
+                    var adminProfile = col.FindOne(x => x.LicenseID.Equals(targetLicense));
+                    var playerInfo = col2.FindOne(x => x.LicenseID.Equals(targetLicense));
+                    var playerProfile = col3.FindOne(x => x.LicenseID.Equals(targetLicense));
+
+                    if (adminProfile == null && playerInfo != null && playerProfile != null)
+                    {
+                        //Construct new admin profile.
+                        AdminModel newProfile = new AdminModel()
+                        {
+                            LicenseID = targetLicense,
+                            Name = target.Name
+                        };
+
+                        //Update admin status
+                        playerInfo.IsAdmin = true;
+                        playerProfile.IsAdmin = true;
+
+                        //Insert & update new admin
+                        col.Insert(newProfile);
+                        col2.Update(playerInfo);
+                        col3.Update(playerProfile);
+
+                        //Invoke callback to update on clientside
+                        TriggerClientEvent(target, SharedProperties.AdminCallback, 1);
+
+                        //Notify
+                        ChatUtils.Instance.PrintToClient(player, $"You've given {target.Name} admin!", SharedProperties.ColorGood);
+                        ChatUtils.Instance.PrintToClient(target, $"You've been given admin by {player.Name}!", SharedProperties.ColorGood);
+                        Console.WriteLine($"Admin given to {target.Name} by {player.Name}");
+                    }
+                    else
+                    {
+                        ChatUtils.Instance.PrintToClient(player, "Failed to give admin.", SharedProperties.ColorError);
+                    }
+                }
+            }
+            else
+            {
+                ChatUtils.Instance.PrintToClient(player, $"Failed to find player with id: {netID}", SharedProperties.ColorWarning);
+            }
+        }
+
+        public void RemoveAdmin([FromSource]Player player, int netID)
+        {
+            var target = Players[netID];
+            if (target != null)
+            {
+                var targetLicense = target.Identifiers["license"];
+                using (var db = new LiteDatabase(SharedProperties.DatabaseName))
+                {
+                    var col = db.GetCollection<AdminModel>(SharedProperties.DatabaseTableAdmins);
+                    var col2 = db.GetCollection<InfoModel>(SharedProperties.DatabaseTableInfo);
+                    var col3 = db.GetCollection<ProfileModel>(SharedProperties.DatabaseTableProfile);
+
+                    var adminProfile = col.FindOne(x => x.LicenseID.Equals(targetLicense));
+                    var playerInfo = col2.FindOne(x => x.LicenseID.Equals(targetLicense));
+                    var playerProfile = col3.FindOne(x => x.LicenseID.Equals(targetLicense));
+
+                    if (adminProfile != null && playerInfo != null && playerProfile != null)
+                    {
+                        var val = col.Delete(x => x.LicenseID.Equals(targetLicense));
+                        if(val > 0)
+                        {
+                            //Update admin status
+                            playerInfo.IsAdmin = false;
+                            playerProfile.IsAdmin = false;
+
+                            //Update values
+                            col2.Update(playerInfo);
+                            col3.Update(playerProfile);
+
+                            //Invoke callback to update on clientside
+                            TriggerClientEvent(target, SharedProperties.AdminCallback, 0);
+                            
+                            //Notify
+                            ChatUtils.Instance.PrintToClient(player, $"You've removed {target.Name}'s admin!", SharedProperties.ColorGood);
+                            ChatUtils.Instance.PrintToClient(target, $"Your admin status has been revoked!", SharedProperties.ColorError);
+                            Console.WriteLine($"{target.Name}'s admin status has been revoked by {player.Name}");
+                        }
+                        else
+                        {
+                            ChatUtils.Instance.PrintToClient(player, $"Failed to remove admin from {target.Name}", SharedProperties.ColorError);
+                        }
+                    }
+                    else
+                    {
+                        ChatUtils.Instance.PrintToClient(player, "Failed to remove admin.", SharedProperties.ColorError);
+                    }
+                }
+            }
+            else
+            {
+                ChatUtils.Instance.PrintToClient(player, $"Failed to find player with id: {netID}", SharedProperties.ColorWarning);
+            }
+            #endregion
+        }
     }
 }

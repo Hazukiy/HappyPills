@@ -20,6 +20,7 @@ namespace LiteRoleplayServer
             //Player profile events
             EventHandlers[SharedProperties.EventLoadProfile] += new Action<Player>(ProfileActions.Instance.InitialProfileLoad);
             EventHandlers[SharedProperties.EventSaveProfile] += new Action<Player, dynamic>(ProfileActions.Instance.SavePlayerProfile);
+            EventHandlers[SharedProperties.EventDepositWallet] += new Action<Player, int>(ProfileActions.Instance.DepositWallet);
 
             //Admin events
             EventHandlers[SharedProperties.EventInvokeOwnership] += new Action<Player>(Commands.Instance.InvokeOwnership);
@@ -27,6 +28,10 @@ namespace LiteRoleplayServer
             EventHandlers[SharedProperties.EventUnbanPlayer] += new Action<Player, int>(Commands.Instance.UnbanPlayer);
             EventHandlers[SharedProperties.EventKickPlayer] += new Action<Player, int, string>(Commands.Instance.KickPlayer);
             EventHandlers[SharedProperties.EventFreezePlayer] += new Action<Player, int, int>(Commands.Instance.FreezePlayer);
+            EventHandlers[SharedProperties.EventAddBan] += new Action<Player, string, string, int>(Commands.Instance.AddBan);
+
+            EventHandlers[SharedProperties.EventGiveAdmin] += new Action<Player, int>(Commands.Instance.GiveAdmin);
+            EventHandlers[SharedProperties.EventRemoveAdmin] += new Action<Player, int>(Commands.Instance.RemoveAdmin);
 
             //Notify that server is loaded
             Console.WriteLine($"[LiteRoleplay v{Assembly.GetExecutingAssembly().GetName().Version}][SERVER] - Loaded successfully.");
