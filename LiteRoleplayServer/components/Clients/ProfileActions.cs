@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Linq;
 using CitizenFX.Core;
 using LiteDB;
 using LiteRoleplay.Shared;
@@ -56,7 +57,7 @@ namespace LiteRoleplayServer.Components.Clients
         /// <param name="profile"></param>
         public void SavePlayerProfile([FromSource]Player player, dynamic profile)
         {
-            var playerProfile = ConvertToProfile(profile);
+            var playerProfile = SharedProperties.ConvertToProfile(profile);
             if(DoesProfileExist(player) && playerProfile != null)
             {
                 using (var db = new LiteDatabase(SharedProperties.DatabaseName))
@@ -64,6 +65,31 @@ namespace LiteRoleplayServer.Components.Clients
                     var col = db.GetCollection<ProfileModel>(SharedProperties.DatabaseTableProfile);
                     col.Update(playerProfile);
                     Console.WriteLine($"Profile saved = {playerProfile}");
+                }
+            }
+        }
+
+        public void ChangeJob([FromSource]Player player, int jobID)
+        {
+            var playerLicense = player.Identifiers["license"];
+            using (var db = new LiteDatabase(SharedProperties.DatabaseName))
+            {
+                var col = db.GetCollection<ProfileModel>(SharedProperties.DatabaseTableProfile);
+                var playerProfile = col.FindOne(x => x.LicenseID.Equals(playerLicense));
+                if (playerProfile != null)
+                {
+                    playerProfile.Job = jobID;
+                    playerProfile.Salary -= GetSalary(jobID);
+                    col.Update(playerProfile);
+
+                    //Update local profile
+                    TriggerClientEvent(player, SharedProperties.ProfileCallback, playerProfile);
+                    TriggerClientEvent(player, SharedProperties.JobsCallback, jobID);
+
+                    var job = GetJob(jobID);
+
+                    //Notify 
+                    ChatUtils.Instance.PrintToClient(player, $"You've changed job to [{job.JobName}] that pays ${job.Salary} per minute!", SharedProperties.ColorGood);
                 }
             }
         }
@@ -95,6 +121,20 @@ namespace LiteRoleplayServer.Components.Clients
 
         }
         #region Private Methods
+        private JobsModel GetJob(int jobID)
+        {
+            return SharedProperties.AllJobs
+                .Where(x => x.JobID == jobID)
+                .FirstOrDefault();
+        }
+
+        private int GetSalary(int jobID)
+        {
+            return SharedProperties.AllJobs
+                .Where(x => x.JobID == jobID)
+                .FirstOrDefault().Salary;
+        }
+
         /// <summary>
         /// Returns true if player already has a profile
         /// </summary>
@@ -142,21 +182,6 @@ namespace LiteRoleplayServer.Components.Clients
                 Console.WriteLine($"New profile inserted = {newProfile}");
                 TriggerClientEvent(player, SharedProperties.ProfileCallback, newProfile);
             }
-        }
-
-        private ProfileModel ConvertToProfile(dynamic obj)
-        {
-            return new ProfileModel()
-            {
-                Id = obj.Id,
-                LicenseID = obj.LicenseID,
-                Wallet = obj.Wallet,
-                Bank = obj.Bank,
-                Salary = obj.Salary,
-                Job = obj.Job,
-                IsWanted = obj.IsWanted,
-                IsAdmin = obj.IsAdmin
-            };
         }
         #endregion
     }

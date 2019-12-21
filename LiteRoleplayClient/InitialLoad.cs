@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Drawing;
+using System.Linq;
 using System.Reflection;
 using System.Threading.Tasks;
 using CitizenFX.Core;
@@ -13,6 +14,9 @@ namespace LiteRoleplayClient
     {
         //Local copy of player profile
         private ProfileModel PlayerProfile { get; set; }
+
+        //Local copy of job profile
+        private JobsModel JobProfile { get; set; }
 
         //Local player variables
         private int PlayerSalaryTimer { get; set; }
@@ -31,6 +35,7 @@ namespace LiteRoleplayClient
             //Custom events
             EventHandlers[SharedProperties.ProfileCallback] += new Action<ProfileModel>(OnPlayerProfileCallback);
             EventHandlers[SharedProperties.AdminCallback] += new Action<int>(OnPlayerGetAdminCallback);
+            EventHandlers[SharedProperties.JobsCallback] += new Action<int>(OnPlayerChangeJobCallback);
 
             //Load player
             InitalisePlayer();
@@ -50,6 +55,7 @@ namespace LiteRoleplayClient
             Tick += PlayerSalaryTick;
             Tick += MenuTick;
             Tick += LocationTick;
+            Tick += ModelCheckerTick;
 
             //Load profile
             TriggerServerEvent(SharedProperties.EventLoadProfile);
@@ -64,6 +70,7 @@ namespace LiteRoleplayClient
             RegisterCommand("profile", new Action<int, List<object>, string>((source, args, raw) => { Command_GetProfile(); }), false);
             RegisterCommand("deposit", new Action<int, List<object>, string>((source, args, raw) => { Command_DepositWallet(args); }), false);
             RegisterCommand("changejob", new Action<int, List<object>, string>((source, args, raw) => { Command_ChangeJob(args); }), false);
+            RegisterCommand("kill", new Action<int, List<object>, string>((source, args, raw) => { Command_Commit(); }), false);
 
             //Cop commands
 
@@ -80,6 +87,9 @@ namespace LiteRoleplayClient
             //Spawning commands
             RegisterCommand("admincar", new Action<int, List<object>, string>((source, args, raw) => { Command_AdminCar(args); }), false);
             RegisterCommand("spawncar", new Action<int, List<object>, string>((source, args, raw) => { Command_SpawnCar(args); }), false);
+            RegisterCommand("lockcar", new Action<int, List<object>, string>((source, args, raw) => { Command_LockCar(args); }), false);
+            RegisterCommand("torque", new Action<int, List<object>, string>((source, args, raw) => { Command_SetTorque(args); }), false);
+            RegisterCommand("power", new Action<int, List<object>, string>((source, args, raw) => { Command_SetPower(args); }), false);
 
             //World management
             RegisterCommand("settime", new Action<int, List<object>, string>((source, args, raw) => { Command_SetTime(args); }), false);
@@ -91,20 +101,40 @@ namespace LiteRoleplayClient
             RegisterCommand("freeze", new Action<int, List<object>, string>((source, args, raw) => { Command_FreezePlayer(args); }), false);
             RegisterCommand("god", new Action<int, List<object>, string>((source, args, raw) => { Command_Godmode(args); }), false);
             RegisterCommand("wanted", new Action<int, List<object>, string>((source, args, raw) => { Command_Wanted(args); }), false);
-            RegisterCommand("torque", new Action<int, List<object>, string>((source, args, raw) => { Command_SetTorque(args); }), false);
-            RegisterCommand("power", new Action<int, List<object>, string>((source, args, raw) => { Command_SetPower(args); }), false);
             RegisterCommand("weapons", new Action<int, List<object>, string>((source, args, raw) => { Command_GetAllWeapons(); }), false);
-            RegisterCommand("lockcar", new Action<int, List<object>, string>((source, args, raw) => { Command_LockCar(args); }), false);
         }
 
         private void OnPlayerSpawned()
         {
             var player = new Player(GetPlayerIndex());
             SpawnPlayer(player, SharedProperties.DefaultSpawn);
+
+            //Give weapons
+            GivePlayerJobWeapons();
         }
         #endregion
 
         #region Custom Events
+        public void OnPlayerChangeJobCallback(int jobID)
+        {
+            if(jobID > 0)
+            {
+                JobProfile = SharedProperties.AllJobs.Where(x => x.JobID == jobID).FirstOrDefault();
+
+                //Remove weapons from ped
+                RemoveAllPedWeapons(GetPlayerPed(GetPlayerIndex()), true);
+
+                //Give weapons
+                GivePlayerJobWeapons();
+
+                PrintToChat($"Welcome to your new job: [{JobProfile}]", SharedProperties.ColorGood);
+            }
+            else
+            {
+                Debug.WriteLine("An error happened trying to change job.");
+            }
+        }
+
         public void OnPlayerGetAdminCallback(int status)
         {
             //Got admin 
@@ -130,7 +160,15 @@ namespace LiteRoleplayClient
         {
             if (profile != null)
             {
-                PlayerProfile = SharedProperties.ConvertToProfile(profile);
+                ProfileModel newProfile = SharedProperties.ConvertToProfile(profile);
+                PlayerProfile = newProfile;
+
+                if(JobProfile == null)
+                {
+                    JobProfile = SharedProperties.AllJobs.Where(x => x.JobID == PlayerProfile.Job).FirstOrDefault();
+                    PrintToChat($"Job Profile Loaded: {JobProfile}", SharedProperties.ColorGood);
+                }
+
                 PrintToChat($"Profile Loaded: {PlayerProfile}", SharedProperties.ColorGood);
             }
             else
@@ -142,6 +180,29 @@ namespace LiteRoleplayClient
         #endregion
 
         #region Timers
+        private async Task ModelCheckerTick()
+        {
+            Player player = new Player(GetPlayerIndex());
+
+            //Ensure player isn't trying to change their skin through exploits
+            if(JobProfile != null)
+            {
+                foreach (var item in JobProfile.Models)
+                {
+                    var jobHash = GetHashKey(item);
+                    if (player.Character.Model.Hash == jobHash)
+                    {
+                        return;
+                    }
+                }
+
+                //Change model
+                ChangePlayerModel(player);
+            }
+
+            await Delay(5000);
+        }
+
         private async Task LocationTick()
         {
             Player player = new Player(GetPlayerIndex());
@@ -241,6 +302,12 @@ namespace LiteRoleplayClient
         #endregion
 
         #region Commands
+        private void Command_Commit()
+        {
+            Player player = new Player(GetPlayerIndex());
+            player.Character.Kill();
+            PrintToChat("You've committed suicide", SharedProperties.ColorGood);
+        }
         private void Command_ChangeJob(List<object> args)
         {
             if (args.Count == 1)
@@ -248,10 +315,7 @@ namespace LiteRoleplayClient
                 var jobID = Convert.ToInt32(args[0].ToString());
                 if(IsJobValid(jobID))
                 {
-
-                    //todo: Change job event here
-
-                    //PrintToChat("Usage: /changejob <jobid>", SharedProperties.ColorWarning);
+                    TriggerServerEvent(SharedProperties.EventChangeJob, jobID);
                 }
                 else
                 {
@@ -263,7 +327,6 @@ namespace LiteRoleplayClient
                 PrintToChat("Usage: /changejob <jobid>", SharedProperties.ColorWarning);
             }
         }
-
         private void Command_DepositWallet(List<object> args)
         {
             //Also check if they're near any banks
@@ -840,6 +903,39 @@ namespace LiteRoleplayClient
         #endregion
 
         #region Private Methods
+        private void GivePlayerJobWeapons()
+        {
+            //Give player weapons from job
+            if (JobProfile != null)
+            {
+                foreach (var item in JobProfile.SpawnWeapons)
+                {
+                    var hash = GetHashKey(item);
+                    GiveWeaponToPed(PlayerPedId(), (uint)hash, 1000, false, true);
+
+                    if (JobProfile.IsAdmin)
+                    {
+                        SetPedInfiniteAmmo(PlayerPedId(), true, (uint)hash);
+                        SetPedInfiniteAmmoClip(PlayerPedId(), true);
+                    }
+                }
+            }
+        }
+        private async void ChangePlayerModel(Player player)
+        {
+            var rnd = new Random().Next(0, JobProfile.Models.Length);
+            var model = (uint)GetHashKey(JobProfile.Models[rnd]);
+            while(!HasModelLoaded(model))
+            {
+                RequestModel(model);
+                await Delay(200);
+            }
+
+            if(HasModelLoaded(model))
+            {
+                SetPlayerModel(player.Handle, model);
+            }
+        }
         private bool IsJobValid(int jobID)
         {
             foreach(var item in SharedProperties.AllJobs)

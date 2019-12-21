@@ -27,6 +27,7 @@ namespace LiteRoleplay.Shared
         //Server -> Client Events/Callbacks
         public const string ProfileCallback = "sendProfile";
         public const string AdminCallback = "sendAdmin";
+        public const string JobsCallback = "sendJob";
 
         //Client - > Server Events/Callbacks
         public const string EventLoadProfile = "netLoadProfile";
@@ -40,6 +41,7 @@ namespace LiteRoleplay.Shared
         public const string EventGiveAdmin = "netGiveAdmin";
         public const string EventRemoveAdmin = "netRemoveAdmin";
         public const string EventDepositWallet = "netDepositWallet";
+        public const string EventChangeJob = "netChangeJob";
 
         public static string[] AllWeapons = new string[]
         {
@@ -134,7 +136,7 @@ namespace LiteRoleplay.Shared
             JobID = 2,
             JobName = "Police Officer",
             Models = new string[] { "s_m_y_ranger_01", "s_m_y_sheriff_01", "s_m_y_cop_01" },
-            Salary = 2,
+            Salary = 15,
             IsPolice = false,
             IsAdmin = false,
             SpawnWeapons = new string[] { "WEAPON_NIGHTSTICK", "WEAPON_PISTOL", "WEAPON_STUNGUN", "WEAPON_FLASHLIGHT" }
@@ -145,7 +147,7 @@ namespace LiteRoleplay.Shared
             JobID = 3,
             JobName = "Admin",
             Models = new string[] { "u_m_y_juggernaut_01" },
-            Salary = 0, // Admin mode don't earn money
+            Salary = 50,
             IsPolice = false,
             IsAdmin = true,
             SpawnWeapons = AllWeapons
