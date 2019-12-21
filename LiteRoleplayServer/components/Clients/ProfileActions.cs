@@ -79,7 +79,7 @@ namespace LiteRoleplayServer.Components.Clients
                 if (playerProfile != null)
                 {
                     playerProfile.Job = jobID;
-                    playerProfile.Salary -= GetSalary(jobID);
+                    playerProfile.Salary = GetSalary(jobID);
                     col.Update(playerProfile);
 
                     //Update local profile
