@@ -191,9 +191,10 @@ namespace LiteRoleplayClient
             //Main hud
             DisplayHud();
 
+            //Car info
             if(Game.PlayerPed.CurrentVehicle != null)
             {
-                DisplayMPH();
+                DisplayCarInfo();
             }
         }
 
@@ -1067,15 +1068,18 @@ namespace LiteRoleplayClient
             AddTextComponentString($"Wallet: ${PlayerProfile.Wallet}\nBank: ${PlayerProfile.Bank}\nJob: {JobProfile.JobName}\nSalary: ${PlayerProfile.Salary}\nNext Paycheck: {PlayerSalaryTimer} seconds");
             DrawText(0.18f, 0.80f);
         }
-        private void DisplayMPH()
+        private void DisplayCarInfo()
         {
+            var carName = Game.PlayerPed.CurrentVehicle.DisplayName;
+            var carType = Game.PlayerPed.CurrentVehicle.ClassLocalizedName;
+
             SetTextScale(0.35f, 0.70f);
             SetTextFont(4);
             SetTextProportional(true);
             SetTextColour(0, 255, 0, 255);
             SetTextEntry("String");
             SetTextDropshadow(5, 0, 0, 0, 0);
-            AddTextComponentString($"{Convert.ToInt32(Game.PlayerPed.CurrentVehicle.Speed * 2)} MPH");
+            AddTextComponentString($"{Convert.ToInt32(Game.PlayerPed.CurrentVehicle.Speed * 2)} MPH\nCar Name: {carName} ({carType})");
             DrawText(0.80f, 0.90f);
         }
         private void SpawnPlayer(Player player, float[] spawnLoc)
