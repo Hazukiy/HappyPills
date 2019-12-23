@@ -119,16 +119,27 @@ namespace LiteRoleplay.Shared
             "WEAPON_WRENCH"
         };
 
+        //Spawn Locations 
+        public static float[] DefaultSpawn = { -1329.704f, -1512.436f, 4.379375f }; //On venice beach
+
+        //General locations (NameOfLocation_AreaOfLocation)
+        public static float[] PoliceStation_Atlee_St = { 440.9918f, -981.0921f, 30.9896f }; //City PD
+        public static float[] ATM_Vespucci_Blvd = { 147.0587f, -1035.49f, 29.34372f }; //City bank
+        public static float[][] Location_ATM = { ATM_Vespucci_Blvd };
+        public static float[][] Location_Police = { PoliceStation_Atlee_St };
+
         //Job profiles
         public static JobsModel JobUnemployed = new JobsModel()
         {
             JobID = 1,
             JobName = "Unemployed",
             Models = new string[] { "a_f_m_skidrow_01", "a_m_o_acult_02", "a_m_o_soucent_02", "a_m_o_soucent_03", "a_m_o_tramp_01" },
+            Description = "An unemployed bum that should probably look for a job.",
             Salary = 2,
             IsPolice = false,
             IsAdmin = false,
-            SpawnWeapons = new string[]{ "WEAPON_KNIFE" }
+            SpawnWeapons = new string[]{ "WEAPON_KNIFE" },
+            SpawnPoint = DefaultSpawn
         };
 
         public static JobsModel JobPolice = new JobsModel()
@@ -136,10 +147,12 @@ namespace LiteRoleplay.Shared
             JobID = 2,
             JobName = "Police Officer",
             Models = new string[] { "s_m_y_ranger_01", "s_m_y_sheriff_01", "s_m_y_cop_01" },
+            Description = "Your job is simple; uphold the law!",
             Salary = 15,
-            IsPolice = false,
+            IsPolice = true,
             IsAdmin = false,
-            SpawnWeapons = new string[] { "WEAPON_NIGHTSTICK", "WEAPON_PISTOL", "WEAPON_STUNGUN", "WEAPON_FLASHLIGHT" }
+            SpawnWeapons = new string[] { "WEAPON_NIGHTSTICK", "WEAPON_PISTOL", "WEAPON_STUNGUN", "WEAPON_FLASHLIGHT" },
+            SpawnPoint = PoliceStation_Atlee_St
         };
 
         public static JobsModel JobAdmin = new JobsModel()
@@ -147,10 +160,12 @@ namespace LiteRoleplay.Shared
             JobID = 3,
             JobName = "Admin",
             Models = new string[] { "u_m_y_juggernaut_01" },
+            Description = "Job for admins on duty only.",
             Salary = 50,
             IsPolice = false,
             IsAdmin = true,
-            SpawnWeapons = AllWeapons
+            SpawnWeapons = AllWeapons,
+            SpawnPoint = DefaultSpawn
         };
 
         public static List<JobsModel> AllJobs = new List<JobsModel>()
@@ -181,15 +196,6 @@ namespace LiteRoleplay.Shared
         //public const string JobDrugLord = "Drug Lord";
         //public const string JobDrugMember = "Drug Member";
 
-        //Spawn Locations 
-        public static float[] DefaultSpawn = { -1329.704f, -1512.436f, 4.379375f, 1.0f }; //On venice beach
-
-        //General locations (NameOfLocation_AreaOfLocation)
-        public static float[] PoliceStation_Atlee_St = { 440.9918f, -981.0921f, 30.9896f }; //City PD
-        public static float[] ATM_Vespucci_Blvd = { 147.0587f, -1035.49f, 29.34372f }; //City bank
-
-        public static float[][] Location_ATM = { ATM_Vespucci_Blvd };
-        public static float[][] Location_Police = { PoliceStation_Atlee_St };
         //Custom methods
         public static ProfileModel ConvertToProfile(dynamic obj)
         {

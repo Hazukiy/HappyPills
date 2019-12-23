@@ -56,6 +56,7 @@ namespace LiteRoleplayClient
             Tick += MenuTick;
             Tick += LocationTick;
             Tick += ModelCheckerTick;
+            Tick += HudTick;
 
             //Load profile
             TriggerServerEvent(SharedProperties.EventLoadProfile);
@@ -71,8 +72,10 @@ namespace LiteRoleplayClient
             RegisterCommand("deposit", new Action<int, List<object>, string>((source, args, raw) => { Command_DepositWallet(args); }), false);
             RegisterCommand("changejob", new Action<int, List<object>, string>((source, args, raw) => { Command_ChangeJob(args); }), false);
             RegisterCommand("kill", new Action<int, List<object>, string>((source, args, raw) => { Command_Commit(); }), false);
+            RegisterCommand("dv", new Action<int, List<object>, string>((source, args, raw) => { Command_DeleteVehicle(); }), false);
 
             //Cop commands
+            RegisterCommand("copcar", new Action<int, List<object>, string>((source, args, raw) => { Command_SpawnCopCar(); }), false);
 
             //Ban commands
             RegisterCommand("ban", new Action<int, List<object>, string>((source, args, raw) => { Command_BanPlayer(args); }), false);
@@ -90,6 +93,7 @@ namespace LiteRoleplayClient
             RegisterCommand("lockcar", new Action<int, List<object>, string>((source, args, raw) => { Command_LockCar(args); }), false);
             RegisterCommand("torque", new Action<int, List<object>, string>((source, args, raw) => { Command_SetTorque(args); }), false);
             RegisterCommand("power", new Action<int, List<object>, string>((source, args, raw) => { Command_SetPower(args); }), false);
+            RegisterCommand("fixcar", new Action<int, List<object>, string>((source, args, raw) => { Command_FixCar(); }), false);
 
             //World management
             RegisterCommand("settime", new Action<int, List<object>, string>((source, args, raw) => { Command_SetTime(args); }), false);
@@ -107,7 +111,9 @@ namespace LiteRoleplayClient
         private void OnPlayerSpawned()
         {
             var player = new Player(GetPlayerIndex());
-            SpawnPlayer(player, SharedProperties.DefaultSpawn);
+
+            //Spawn
+            SpawnPlayer(player, JobProfile.SpawnPoint);
 
             //Give weapons
             GivePlayerJobWeapons();
@@ -180,6 +186,17 @@ namespace LiteRoleplayClient
         #endregion
 
         #region Timers
+        private async Task HudTick()
+        {
+            //Main hud
+            DisplayHud();
+
+            if(Game.PlayerPed.CurrentVehicle != null)
+            {
+                DisplayMPH();
+            }
+        }
+
         private async Task ModelCheckerTick()
         {
             Player player = new Player(GetPlayerIndex());
@@ -202,7 +219,6 @@ namespace LiteRoleplayClient
 
             await Delay(5000);
         }
-
         private async Task LocationTick()
         {
             Player player = new Player(GetPlayerIndex());
@@ -228,7 +244,6 @@ namespace LiteRoleplayClient
 
             //await Delay(1000);
         }
-
         private async Task MenuTick()
         {
             //Wanted 
@@ -262,7 +277,6 @@ namespace LiteRoleplayClient
                 }
             }
         }
-
         private async Task PlayerSalaryTick()
         {
             if(PlayerProfile != null)
@@ -290,18 +304,55 @@ namespace LiteRoleplayClient
         }
         #endregion
 
-        #region Menu Methods
-        private void DrawMenu()
-        {
-            //Main container
-            DrawRect(0.5f, 0.5f, 0.500f, 0.500f, 21, 17, 29, 255);
-
-            //Inner frame
-            DrawRect(0.5f, 0.5f, 0.200f, 0.200f, 255, 0, 0, 255);
-        }
-        #endregion
-
         #region Commands
+        private void Command_FixCar()
+        {
+            if(PlayerProfile.IsAdmin)
+            {
+
+            }
+            else
+            {
+                PrintToChat("You do not have permission to this.", SharedProperties.ColorError);
+            }
+        }
+
+        private void Command_DeleteVehicle()
+        {
+            var currentCar = Game.PlayerPed.CurrentVehicle;
+            currentCar.Delete();
+        }
+        private async void Command_SpawnCopCar()
+        {
+            if (JobProfile.IsAdmin || JobProfile.IsPolice)
+            {
+                var hash = (uint)GetHashKey("police3"); //City pd car
+                if(IsModelInCdimage(hash) && IsModelAVehicle(hash))
+                {
+                    var copCar = await World.CreateVehicle("police3", Game.PlayerPed.Position, Game.PlayerPed.Heading);
+
+                    //Modify
+                    copCar.CanTiresBurst = false;
+                    copCar.Mods.WindowTint = VehicleWindowTint.PureBlack;
+                    copCar.Mods.LicensePlate = $"POLICE";
+                    copCar.Mods.InstallModKit();
+
+                    //Spawn ped into car
+                    Game.PlayerPed.SetIntoVehicle(copCar, VehicleSeat.Driver);
+
+                    //Delete last car
+                    var lastCar = Game.Player.LastVehicle;
+                    lastCar.Delete();
+
+                    //Notify
+                    PrintToChat("Your cop car has spawned!", SharedProperties.ColorGood);
+                }
+            }
+            else
+            {
+                PrintToChat("You do not have permission to this.", SharedProperties.ColorError);
+            }
+        }
         private void Command_Commit()
         {
             Player player = new Player(GetPlayerIndex());
@@ -1005,9 +1056,31 @@ namespace LiteRoleplayClient
             SetTextCentre(true);
             DrawText(0.45f, 0.5f);
         }
+        private void DisplayHud()
+        {
+            SetTextScale(0.35f, 0.50f);
+            SetTextFont(4);
+            SetTextProportional(true);
+            SetTextColour(248, 183, 29, 255);
+            SetTextEntry("String");
+            SetTextDropshadow(5, 0, 0, 0, 0);
+            AddTextComponentString($"Wallet: ${PlayerProfile.Wallet}\nBank: ${PlayerProfile.Bank}\nJob: {JobProfile.JobName}\nSalary: ${PlayerProfile.Salary}\nNext Paycheck: {PlayerSalaryTimer} seconds");
+            DrawText(0.18f, 0.80f);
+        }
+        private void DisplayMPH()
+        {
+            SetTextScale(0.35f, 0.70f);
+            SetTextFont(4);
+            SetTextProportional(true);
+            SetTextColour(0, 255, 0, 255);
+            SetTextEntry("String");
+            SetTextDropshadow(5, 0, 0, 0, 0);
+            AddTextComponentString($"{Convert.ToInt32(Game.PlayerPed.CurrentVehicle.Speed * 2)} MPH");
+            DrawText(0.80f, 0.90f);
+        }
         private void SpawnPlayer(Player player, float[] spawnLoc)
         {
-            StartPlayerTeleport(player.Handle, spawnLoc[0], spawnLoc[1], spawnLoc[2], spawnLoc[3], false, true, false);
+            StartPlayerTeleport(player.Handle, spawnLoc[0], spawnLoc[1], spawnLoc[2], 0.5f, false, true, false);
         }
         #endregion
     }
