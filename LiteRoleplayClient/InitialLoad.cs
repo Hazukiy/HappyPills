@@ -76,6 +76,8 @@ namespace LiteRoleplayClient
 
             //Cop commands
             RegisterCommand("copcar", new Action<int, List<object>, string>((source, args, raw) => { Command_SpawnCopCar(); }), false);
+            RegisterCommand("cuff", new Action<int, List<object>, string>((source, args, raw) => { Command_CuffPlayer(args); }), false);
+            RegisterCommand("uncuff", new Action<int, List<object>, string>((source, args, raw) => { Command_UnCuffPlayer(args); }), false);
 
             //Ban commands
             RegisterCommand("ban", new Action<int, List<object>, string>((source, args, raw) => { Command_BanPlayer(args); }), false);
@@ -194,6 +196,7 @@ namespace LiteRoleplayClient
             //Car info
             if(Game.PlayerPed.CurrentVehicle != null)
             {
+                DisplayMPH();
                 DisplayCarInfo();
             }
         }
@@ -306,18 +309,96 @@ namespace LiteRoleplayClient
         #endregion
 
         #region Commands
-        private void Command_FixCar()
+        private void Command_UnCuffPlayer(List<object> args)
         {
-            if(PlayerProfile.IsAdmin)
+            if (PlayerProfile.IsAdmin)
             {
-
+                if (args.Count == 1)
+                {
+                    var target = Players[Convert.ToInt32(args[0])];
+                    if (target != null)
+                    {
+                        var isCuffed = target.Character.IsCuffed;
+                        if (isCuffed)
+                        {
+                            SetEnableHandcuffs(target.Handle, false);
+                            PrintToChat($"Player {target.Name} has been uncuffed", SharedProperties.ColorGood);
+                        }
+                        else
+                        {
+                            PrintToChat($"Target is not cuffed", SharedProperties.ColorWarning);
+                        }
+                    }
+                    else
+                    {
+                        PrintToChat($"Failed to find player with netID: {args[0]}", SharedProperties.ColorWarning);
+                    }
+                }
+                else
+                {
+                    PrintToChat("Usage: /cuffplayer <netID>", SharedProperties.ColorWarning);
+                }
             }
             else
             {
                 PrintToChat("You do not have permission to this.", SharedProperties.ColorError);
             }
         }
-
+        private void Command_CuffPlayer(List<object> args)
+        {
+            if (PlayerProfile.IsAdmin)
+            {
+                if(args.Count == 1)
+                {
+                    var target = Players[Convert.ToInt32(args[0])];
+                    if(target != null)
+                    {
+                        var isCuffed = target.Character.IsCuffed;
+                        if(!isCuffed)
+                        {
+                            SetEnableHandcuffs(target.Handle, true);
+                            PrintToChat($"Player {target.Name} has been cuffed!", SharedProperties.ColorGood);
+                        }
+                        else
+                        {
+                            PrintToChat($"Target is already cuffed", SharedProperties.ColorWarning);
+                        }
+                    }
+                    else
+                    {
+                        PrintToChat($"Failed to find player with netID: {args[0]}", SharedProperties.ColorWarning);
+                    }
+                }
+                else
+                {
+                    PrintToChat("Usage: /cuffplayer <netID>", SharedProperties.ColorWarning);
+                }
+            }
+            else
+            {
+                PrintToChat("You do not have permission to this.", SharedProperties.ColorError);
+            }
+        }
+        private void Command_FixCar()
+        {
+            if(PlayerProfile.IsAdmin)
+            {
+                var car = Game.PlayerPed.CurrentVehicle;
+                if(car != null)
+                {
+                    car.Health = car.MaxHealth;
+                    PrintToChat("Your car has been fixed.", SharedProperties.ColorWarning);
+                }
+                else
+                {
+                    PrintToChat("You need to be in a car.", SharedProperties.ColorWarning);
+                }
+            }
+            else
+            {
+                PrintToChat("You do not have permission to this.", SharedProperties.ColorError);
+            }
+        }
         private void Command_DeleteVehicle()
         {
             var currentCar = Game.PlayerPed.CurrentVehicle;
@@ -1073,13 +1154,24 @@ namespace LiteRoleplayClient
             var carName = Game.PlayerPed.CurrentVehicle.DisplayName;
             var carType = Game.PlayerPed.CurrentVehicle.ClassLocalizedName;
 
+            SetTextScale(0.35f, 0.50f);
+            SetTextFont(4);
+            SetTextProportional(true);
+            SetTextColour(0, 255, 0, 255);
+            SetTextEntry("String");
+            SetTextDropshadow(5, 0, 0, 0, 0);
+            AddTextComponentString($"Car Name: {carName} ({carType})");
+            DrawText(0.80f, 0.80f);
+        }
+        private void DisplayMPH()
+        {
             SetTextScale(0.35f, 0.70f);
             SetTextFont(4);
             SetTextProportional(true);
             SetTextColour(0, 255, 0, 255);
             SetTextEntry("String");
             SetTextDropshadow(5, 0, 0, 0, 0);
-            AddTextComponentString($"{Convert.ToInt32(Game.PlayerPed.CurrentVehicle.Speed * 2)} MPH\nCar Name: {carName} ({carType})");
+            AddTextComponentString($"{Convert.ToInt32(Game.PlayerPed.CurrentVehicle.Speed * 2)} MPH");
             DrawText(0.80f, 0.90f);
         }
         private void SpawnPlayer(Player player, float[] spawnLoc)
